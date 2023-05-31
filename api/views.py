@@ -7,6 +7,5 @@ from django.contrib.auth.models import User
 # Create your views here.
 @api_view()
 def welcome(request):
-    return Response(
-        User.objects.get(pk=1).username, content_type="application/json", status=200
-    )
+    data = {"user": User.objects.get(pk=1).username}
+    return Response(data, content_type="application/json", status=200)
