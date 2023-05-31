@@ -8,4 +8,4 @@ from django.contrib.auth.models import User
 @api_view()
 def welcome(request):
     data = {"user": User.objects.get(pk=1).username}
-    return Response(data, content_type="application/json", status=200)
+    return Response(data)
