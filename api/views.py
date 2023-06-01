@@ -27,7 +27,20 @@ def product(request, id=None):
 
 @api_view(["GET"])
 def images(request, id=None):
-    if id:
-        items = get_list_or_404(models.ProductImage, product_id=id)
-        serialized_items = serializers.ProductImageSerializer(items, many=True)
-        return Response(serialized_items.data, status.HTTP_200_OK)
+    items = get_list_or_404(models.ProductImage, product_id=id)
+    serialized_items = serializers.ProductImageSerializer(items, many=True)
+    return Response(serialized_items.data, status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def reviews(request, id=None):
+    items = get_list_or_404(models.Review, product_id=id)
+    serialized_items = serializers.ReviewSerializer(items, many=True)
+    return Response(serialized_items.data, status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def orders(request, id=None):
+    items = get_list_or_404(models.Order, product_id=id)
+    serialized_items = serializers.OrderSerializer(items, many=True)
+    return Response(serialized_items.data, status.HTTP_200_OK)

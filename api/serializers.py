@@ -3,6 +3,12 @@ from rest_framework import serializers
 from . import models
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = "__all__"
+
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Category
@@ -38,7 +44,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class ProductSpecificationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.DeliveryMan
+        model = models.ProductSpecification
         fields = "__all__"
 
 
@@ -49,12 +55,19 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    customer = serializers.StringRelatedField()
+    product = serializers.StringRelatedField()
+
     class Meta:
-        model = models.DeliveryMan
+        model = models.Review
         fields = "__all__"
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    customer = serializers.StringRelatedField()
+    product = serializers.StringRelatedField()
+    delivery_man = serializers.StringRelatedField()
+
     class Meta:
-        model = models.DeliveryMan
+        model = models.Order
         fields = "__all__"
