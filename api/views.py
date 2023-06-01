@@ -15,7 +15,9 @@ def welcome(request):
 @api_view(["GET"])
 def product(request, id=None):
     if id:
-        get_object_or_404(models.Product, pk=id)
+        item = get_object_or_404(models.Product, pk=id)
+        serialized_item = serializers.ProductSerializer(item)
+        return Response(serialized_item.data)
 
     else:
         items = models.Product.objects.all()
