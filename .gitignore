@@ -2,4 +2,4 @@
 .env
 
 # Staticfiles
-staticfiles
+staticfiles/
