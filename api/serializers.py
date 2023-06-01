@@ -42,6 +42,12 @@ class ProductSpecificationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ProductImage
+        fields = "__all__"
+
+
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.DeliveryMan

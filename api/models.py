@@ -101,6 +101,18 @@ class ProductSpecification(models.Model):
         unique_together = ("key", "product")
 
 
+class ProductImage(models.Model):
+    url = models.CharField(max_length=255)
+    description = models.CharField(max_length=45)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return self.description
+
+    class Meta:
+        unique_together = ("url", "product")
+
+
 class Review(models.Model):
     rating = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(5)])
     title = models.CharField(max_length=45)

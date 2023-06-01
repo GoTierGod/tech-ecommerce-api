@@ -33,6 +33,11 @@ class ProductSpecification(admin.ModelAdmin):
     list_display = ("id", "key", "value", "product")
 
 
+@admin.register(models.ProductImage)
+class ProductImage(admin.ModelAdmin):
+    list_display = ("id", "product", "description")
+
+
 @admin.register(models.Review)
 class Review(admin.ModelAdmin):
     list_display = ("id", "product", "customer", "rating")
