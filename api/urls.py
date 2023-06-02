@@ -5,7 +5,10 @@ urlpatterns = [
     path("", views.welcome),
     path("product/", views.product),
     path("product/<int:id>", views.product),
-    path("product/images/<int:id>", views.images),
-    path("product/reviews/<int:id>", views.reviews),
-    path("product/orders/<int:id>", views.orders),
+    path("product/image/", views.image),
+    path("product/image/<int:id>", views.image),
+    path("product/review/", views.review),
+    path("product/review/<int:id>", views.review),
+    path("product/order/", views.order),
+    path("product/order/<int:id>", views.order),
 ]
