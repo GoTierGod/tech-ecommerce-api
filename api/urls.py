@@ -3,12 +3,10 @@ from . import views
 
 urlpatterns = [
     path("", views.welcome),
-    path("product/", views.product),
-    path("product/<int:id>", views.product),
-    path("product/image/", views.image),
-    path("product/image/<int:id>", views.image),
-    path("product/review/", views.review),
-    path("product/review/<int:id>", views.review),
-    path("product/order/", views.order),
-    path("product/order/<int:id>", views.order),
+    path("products/", views.ProductViewSet.as_view({"get": "list"})),
+    path("products/<int:id>", views.ProductViewSet.as_view({"get": "retrieve"})),
+    path("products/images/", views.ImageViewSet.as_view({"get": "list"})),
+    path("products/images/<int:id>", views.ImageViewSet.as_view({"get": "retrieve"})),
+    path("products/reviews/<int:id>", views.ReviewViewSet.as_view({"get": "retrieve"})),
+    path("products/orders/<int:id>", views.OrderViewSet.as_view({"get": "retrieve"})),
 ]

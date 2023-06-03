@@ -2,7 +2,9 @@ from django.shortcuts import render, get_object_or_404, get_list_or_404
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
-from rest_framework.filters import OrderingFilter
+from rest_framework import generics
+from rest_framework import filters
+from rest_framework import viewsets
 from . import serializers
 from . import models
 
@@ -13,55 +15,73 @@ def welcome(request):
     return Response("Welcome")
 
 
-@api_view(["GET"])
-def product(request, id=None):
-    if id:
-        item = get_object_or_404(models.Product.objects.order_by("id"), pk=id)
-        serialized_item = serializers.ProductSerializer(item)
-        return Response(serialized_item.data)
+class ProductViewSet(viewsets.ViewSet):
+    def get_queryset(self, product_id=None):
+        queryset = models.Product.objects.order_by("id")
+        if product_id:
+            queryset = queryset.filter(id=product_id)
+        return queryset
 
-    else:
-        items = models.Product.objects.order_by("id")
-        serialized_items = serializers.ProductSerializer(items, many=True)
-        return Response(serialized_items.data, status.HTTP_200_OK)
+    def list(self, request):
+        queryset = self.get_queryset()
+        serializer = serializers.ProductSerializer(queryset, many=True)
+        return Response(serializer.data, status=200)
 
-
-@api_view(["GET"])
-def image(request, id=None):
-    if id:
-        items = get_list_or_404(
-            models.ProductImage.objects.order_by("id"), product_id=id
-        )
-        serialized_items = serializers.ProductImageSerializer(items, many=True)
-        return Response(serialized_items.data, status.HTTP_200_OK)
-
-    else:
-        items = models.ProductImage.objects.order_by("id")
-        serialized_items = serializers.ProductImageSerializer(items, many=True)
-        return Response(serialized_items.data, status.HTTP_200_OK)
+    def retrieve(self, request, id):
+        queryset = self.get_queryset(product_id=id)
+        serializer = serializers.ProductSerializer(queryset, many=True)
+        return Response(serializer.data, status=200)
 
 
-@api_view(["GET"])
-def review(request, id=None):
-    if id:
-        items = get_list_or_404(models.Review.objects.order_by("id"), product_id=id)
-        serialized_items = serializers.ReviewSerializer(items, many=True)
-        return Response(serialized_items.data, status.HTTP_200_OK)
+class ImageViewSet(viewsets.ViewSet):
+    def get_queryset(self, product_id=None):
+        queryset = models.ProductImage.objects.order_by("id")
+        if product_id:
+            queryset = queryset.filter(product_id=product_id)
+        return queryset
 
-    else:
-        items = models.Review.objects.order_by("id")
-        serialized_items = serializers.ReviewSerializer(items, many=True)
-        return Response(serialized_items.data, status.HTTP_200_OK)
+    def list(self, request):
+        queryset = self.get_queryset()
+        serializer = serializers.ProductImageSerializer(queryset, many=True)
+        return Response(serializer.data, status=200)
+
+    def retrieve(self, request, id):
+        queryset = self.get_queryset(product_id=id)
+        serializer = serializers.ProductImageSerializer(queryset, many=True)
+        return Response(serializer.data, status=200)
 
 
-@api_view(["GET"])
-def order(request, id=None):
-    if id:
-        items = get_list_or_404(models.Order.objects.order_by("id"), product_id=id)
-        serialized_items = serializers.OrderSerializer(items, many=True)
-        return Response(serialized_items.data, status.HTTP_200_OK)
+class ReviewViewSet(viewsets.ViewSet):
+    def get_queryset(self, product_id=None):
+        queryset = models.Review.objects.order_by("id")
+        if product_id:
+            queryset = queryset.filter(product_id=product_id)
+        return queryset
 
-    else:
-        items = models.Order.objects.order_by("id")
-        serialized_items = serializers.OrderSerializer(items, many=True)
-        return Response(serialized_items.data, status.HTTP_200_OK)
+    # def list(self, request):
+    #     queryset = self.get_queryset()
+    #     serializer = serializers.ReviewSerializer(queryset, many=True)
+    #     return Response(serializer.data, status=200)
+
+    def retrieve(self, request, id):
+        queryset = self.get_queryset(product_id=id)
+        serializer = serializers.ReviewSerializer(queryset, many=True)
+        return Response(serializer.data, status=200)
+
+
+class OrderViewSet(viewsets.ViewSet):
+    def get_queryset(self, product_id=None):
+        queryset = models.Order.objects.order_by("id")
+        if product_id:
+            queryset = queryset.filter(product_id=product_id)
+        return queryset
+
+    # def list(self, request):
+    #     queryset = self.get_queryset()
+    #     serializer = serializers.OrderSerializer(queryset, many=True)
+    #     return Response(serializer.data, status=200)
+
+    def retrieve(self, request, id):
+        queryset = self.get_queryset(product_id=id)
+        serializer = serializers.OrderSerializer(queryset, many=True)
+        return Response(serializer.data, status=200)
