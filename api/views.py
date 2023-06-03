@@ -40,14 +40,17 @@ class ImageViewSet(viewsets.ViewSet):
             queryset = queryset.filter(product_id=product_id)
         return queryset
 
-    def list(self, request):
-        queryset = self.get_queryset()
-        serializer = serializers.ProductImageSerializer(queryset, many=True)
-        return Response(serializer.data, status=200)
+    # def list(self, request):
+    #     queryset = self.get_queryset()
+    #     serializer = serializers.ProductImageSerializer(queryset, many=True)
+    #     return Response(serializer.data, status=200)
 
     def retrieve(self, request, id):
+        is_default = request.query_params.get("is_default")
+
         queryset = self.get_queryset(product_id=id)
-        serializer = serializers.ProductImageSerializer(queryset, many=True)
+        filtered_queryset = queryset.filter(is_default=is_default)
+        serializer = serializers.ProductImageSerializer(filtered_queryset, many=True)
         return Response(serializer.data, status=200)
 
 
