@@ -1,9 +1,7 @@
-from django.shortcuts import render, get_object_or_404, get_list_or_404
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from rest_framework import status
-from rest_framework import generics
 from rest_framework import viewsets
+from django.db.models import Avg
 from . import serializers
 from . import models
 
@@ -15,21 +13,48 @@ def welcome(request):
 
 
 class ProductViewSet(viewsets.ViewSet):
-    def get_queryset(self, product_id=None):
-        queryset = models.Product.objects.order_by("id")
-        if product_id:
-            queryset = queryset.filter(id=product_id)
-        return queryset
-
     def list(self, request):
-        queryset = self.get_queryset()
-        serializer = serializers.ProductSerializer(queryset, many=True)
-        return Response(serializer.data, status=200)
+        products = []
+        for product in models.Product.objects.order_by("id"):
+            products.append(
+                {
+                    "details": serializers.ProductSerializer(product).data,
+                    "image": serializers.ProductImageSerializer(
+                        models.ProductImage.objects.filter(product_id=product.id).get(
+                            is_default=True
+                        )
+                    ).data,
+                    "sold": models.Order.objects.filter(product_id=product.id).count(),
+                }
+            )
+
+        return Response(products, status=200)
 
     def retrieve(self, request, id):
-        queryset = self.get_queryset(product_id=id)
-        serializer = serializers.ProductSerializer(queryset, many=True)
-        return Response(serializer.data, status=200)
+        product = models.Product.objects.get(id=id)
+        serialized_product = serializers.ProductSerializer(product)
+
+        images = models.ProductImage.objects.filter(product_id=id)
+        serialized_images = serializers.ProductImageSerializer(images, many=True)
+
+        sold = models.Order.objects.filter(product_id=id).count()
+
+        reviews_counter = models.Review.objects.filter(product_id=id).count()
+
+        rating = models.Review.objects.filter(product_id=id).aggregate(Avg("rating"))[
+            "rating__avg"
+        ]
+
+        return Response(
+            {
+                "details": serialized_product.data,
+                "images": serialized_images.data,
+                "sold": sold,
+                "reviews_counter": reviews_counter,
+                "rating": rating,
+            },
+            status=200,
+        )
 
 
 class ImageViewSet(viewsets.ViewSet):
