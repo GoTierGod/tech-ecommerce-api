@@ -14,6 +14,7 @@ def welcome(request):
 
 
 class ProductViewSet(viewsets.ViewSet):
+    # return less detailed information of a list of products
     def list(self, request):
         # allowed filters to be passed by query parameters
         category = request.query_params.get("category")
@@ -66,6 +67,7 @@ class ProductViewSet(viewsets.ViewSet):
 
         return Response(products, status=200)
 
+    # return a more detailed information about the product with this id
     def retrieve(self, request, id):
         # product
         product = models.Product.objects.get(id=id)
@@ -100,43 +102,31 @@ class ProductViewSet(viewsets.ViewSet):
 
 
 class ImageViewSet(viewsets.ViewSet):
-    def get_queryset(self, product_id=None):
-        queryset = models.ProductImage.objects.order_by("id")
-        if product_id:
-            queryset = queryset.filter(product_id=product_id)
-        return queryset
+    # return all images of the product with this id
+    def list(self, request, id):
+        queryset = models.ProductImage.objects.order_by("id").filter(product_id=id)
 
-    def retrieve(self, request, id):
         is_default = request.query_params.get("is_default")
-
-        queryset = self.get_queryset(product_id=id)
         if is_default:
             queryset = queryset.filter(is_default=is_default)
+
         serializer = serializers.ProductImageSerializer(queryset, many=True)
         return Response(serializer.data, status=200)
 
 
 class ReviewViewSet(viewsets.ViewSet):
-    def get_queryset(self, product_id=None):
-        queryset = models.Review.objects.order_by("id")
-        if product_id:
-            queryset = queryset.filter(product_id=product_id)
-        return queryset
+    # return all reviews of the product with this id
+    def list(self, request, id):
+        queryset = models.Review.objects.order_by("id").filter(product_id=id)
 
-    def retrieve(self, request, id):
-        queryset = self.get_queryset(product_id=id)
         serializer = serializers.ReviewSerializer(queryset, many=True)
         return Response(serializer.data, status=200)
 
 
 class OrderViewSet(viewsets.ViewSet):
-    def get_queryset(self, product_id=None):
-        queryset = models.Order.objects.order_by("id")
-        if product_id:
-            queryset = queryset.filter(product_id=product_id)
-        return queryset
+    # return all orders of the product with this id
+    def list(self, request, id):
+        queryset = models.Order.objects.order_by("id").filter(product_id=id)
 
-    def retrieve(self, request, id):
-        queryset = self.get_queryset(product_id=id)
         serializer = serializers.OrderSerializer(queryset, many=True)
         return Response(serializer.data, status=200)
