@@ -24,6 +24,7 @@ class ProductViewSet(viewsets.ViewSet):
         max_price = request.query_params.get("max_price")
         installments = request.query_params.get("installments")
         stock = request.query_params.get("stock")
+        limit = request.query_params.get("limit")
 
         # product queryset
         queryset = models.Product.objects.order_by("id")
@@ -60,6 +61,8 @@ class ProductViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(stock__gte=1)
             elif stock == "0":
                 queryset = queryset.filter(stock=0)
+        if limit:
+            queryset = queryset[: int(limit)]
 
         # return a response containing the required products
         serialized_products = []
@@ -155,6 +158,8 @@ class CategoryViewSet(viewsets.ViewSet):
 
 class OffersViewSet(viewsets.ViewSet):
     def list(self, request, category=None):
+        limit = request.query_params.get("limit")
+
         queryset = models.Product.objects.all()
         if category:
             try:
@@ -168,7 +173,7 @@ class OffersViewSet(viewsets.ViewSet):
 
         queryset = queryset.extra(select={"discount": "price - offer_price"}).order_by(
             "discount"
-        )
+        )[: int(limit) if limit else 10]
 
         serialized_products = []
         for product in queryset:
