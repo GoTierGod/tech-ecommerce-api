@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from . import serializers
 from . import models
 from . import helpers
+from distutils.util import strtobool
 
 
 # Create your views here.
@@ -24,6 +25,7 @@ class ProductViewSet(viewsets.ViewSet):
         max_price = request.query_params.get("max_price")
         installments = request.query_params.get("installments")
         stock = request.query_params.get("stock")
+        is_gamer = request.query_params.get("is_gamer")
         limit = request.query_params.get("limit")
 
         # product queryset
@@ -57,10 +59,12 @@ class ProductViewSet(viewsets.ViewSet):
         if installments:
             queryset = queryset.filter(installments=installments)
         if stock:
-            if stock == "1":
+            if strtobool(stock):
                 queryset = queryset.filter(stock__gte=1)
-            elif stock == "0":
+            else:
                 queryset = queryset.filter(stock=0)
+        if is_gamer:
+            queryset = queryset.filter(is_gamer=strtobool(is_gamer))
         if limit:
             queryset = queryset[: int(limit)]
 
