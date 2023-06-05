@@ -5,6 +5,7 @@ from rest_framework import viewsets
 from django.db.models import Avg, Count
 from . import serializers
 from . import models
+from . import helpers
 
 
 # Create your views here.
@@ -53,17 +54,7 @@ class ProductViewSet(viewsets.ViewSet):
         # return a response containing the required products
         products = []
         for product in queryset:
-            products.append(
-                {
-                    "details": serializers.ProductSerializer(product).data,
-                    "image": serializers.ProductImageSerializer(
-                        models.ProductImage.objects.filter(product_id=product.id).get(
-                            is_default=True
-                        )
-                    ).data,
-                    "sold": models.Order.objects.filter(product_id=product.id).count(),
-                }
-            )
+            products.append(helpers.make_card_product(product))
 
         return Response(products, status=200)
 
@@ -71,32 +62,10 @@ class ProductViewSet(viewsets.ViewSet):
     def retrieve(self, request, id):
         # product
         product = models.Product.objects.get(id=id)
-        serialized_product = serializers.ProductSerializer(product)
-
-        # product images
-        images = models.ProductImage.objects.filter(product_id=id)
-        serialized_images = serializers.ProductImageSerializer(images, many=True)
-
-        # number of times this product has been sold
-        sold = models.Order.objects.filter(product_id=id).count()
-
-        # number of reviews this product has received
-        reviews_counter = models.Review.objects.filter(product_id=id).count()
-
-        # product rating
-        rating = models.Review.objects.filter(product_id=id).aggregate(Avg("rating"))[
-            "rating__avg"
-        ]
 
         # return a response contained the above data
         return Response(
-            {
-                "details": serialized_product.data,
-                "images": serialized_images.data,
-                "sold": sold,
-                "reviews_counter": reviews_counter,
-                "rating": rating,
-            },
+            helpers.make_detailed_product(product),
             status=200,
         )
 
