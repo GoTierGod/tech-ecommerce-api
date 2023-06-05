@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import viewsets
-from django.db.models import Avg
+from django.db.models import Avg, Count
 from . import serializers
 from . import models
 
@@ -110,23 +110,73 @@ class ImageViewSet(viewsets.ViewSet):
         if is_default:
             queryset = queryset.filter(is_default=is_default)
 
-        serializer = serializers.ProductImageSerializer(queryset, many=True)
-        return Response(serializer.data, status=200)
+        serialized = serializers.ProductImageSerializer(queryset, many=True)
+        return Response(serialized.data, status=200)
 
 
 class ReviewViewSet(viewsets.ViewSet):
     # return all reviews of the product with this id
     def list(self, request, id):
         queryset = models.Review.objects.order_by("id").filter(product_id=id)
+        serialized = serializers.ReviewSerializer(queryset, many=True)
 
-        serializer = serializers.ReviewSerializer(queryset, many=True)
-        return Response(serializer.data, status=200)
+        return Response(serialized.data, status=200)
 
 
 class OrderViewSet(viewsets.ViewSet):
     # return all orders of the product with this id
     def list(self, request, id):
         queryset = models.Order.objects.order_by("id").filter(product_id=id)
+        serialized = serializers.OrderSerializer(queryset, many=True)
 
-        serializer = serializers.OrderSerializer(queryset, many=True)
-        return Response(serializer.data, status=200)
+        return Response(serialized.data, status=200)
+
+
+class BrandViewSet(viewsets.ViewSet):
+    def list(self, request):
+        queryset = models.Brand.objects.order_by("id")
+        serialized = serializers.BrandSerializer(queryset, many=True)
+
+        return Response(serialized.data, status=200)
+
+
+class CategoryViewSet(viewsets.ViewSet):
+    def list(self, request):
+        queryset = models.Category.objects.order_by("id")
+        serialized = serializers.CategorySerializer(queryset, many=True)
+
+        return Response(serialized.data, status=200)
+
+
+class OffersViewSet(viewsets.ViewSet):
+    def list(self, request, category=None):
+        queryset = models.Product.objects.order_by("id")
+        if category:
+            queryset = queryset.filter(
+                category=models.Category.objects.get(title__iexact=category).id
+            )
+
+        queryset = queryset.extra(select={"discount": "price - offer_price"}).order_by(
+            "discount"
+        )
+        serialized = serializers.ProductSerializer(queryset, many=True)
+
+        return Response(serialized.data, status=200)
+
+
+class BestSellersViewSet(viewsets.ViewSet):
+    def list(self, request, category=None):
+        queryset = models.Product.objects.order_by("id")
+        if category:
+            queryset = queryset.filter(category_title__iexact=category)
+
+        best_sellers = models.Order.objects.values("product").annotate(
+            order_count=Count("id")
+        )[:25]
+
+        bs_products = [item["product"] for item in best_sellers]
+
+        queryset = queryset.filter(id__in=bs_products)
+        serialized = serializers.ProductSerializer(queryset, many=True)
+
+        return Response(serialized.data, status=200)
