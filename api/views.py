@@ -1,8 +1,8 @@
-from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import viewsets
-from django.db.models import Avg, Count
+from django.db.models import Count
+from django.core.exceptions import ObjectDoesNotExist
 from . import serializers
 from . import models
 from . import helpers
@@ -30,15 +30,25 @@ class ProductViewSet(viewsets.ViewSet):
 
         # filter if the allowed query parameters are present
         if category:
-            queryset = queryset.filter(
-                category_id=get_object_or_404(
-                    models.Category, title__iexact=category
-                ).id
-            )
+            try:
+                queryset = queryset.filter(
+                    brand_id=models.Category.objects.get(name__iexact=category).id
+                )
+            except ObjectDoesNotExist:
+                return Response(
+                    {"message": f"the brand '{brand}' does not exists"},
+                    status=404,
+                )
         if brand:
-            queryset = queryset.filter(
-                brand_id=get_object_or_404(models.Brand, name__iexact=brand).id
-            )
+            try:
+                queryset = queryset.filter(
+                    brand_id=models.Brand.objects.get(name__iexact=brand).id
+                )
+            except ObjectDoesNotExist:
+                return Response(
+                    {"message": f"the brand '{brand}' does not exists"},
+                    status=404,
+                )
         if min_price:
             queryset = queryset.filter(offer_price__gte=min_price)
         if max_price:
@@ -61,7 +71,12 @@ class ProductViewSet(viewsets.ViewSet):
     # return a more detailed information about the product with this id
     def retrieve(self, request, id):
         # product
-        product = models.Product.objects.get(id=id)
+        try:
+            product = models.Product.objects.get(id=id)
+        except ObjectDoesNotExist:
+            return Response(
+                {"message": f"the product with id '{id}' does not exists"}, status=404
+            )
 
         # return a response contained the above data
         return Response(
@@ -73,6 +88,13 @@ class ProductViewSet(viewsets.ViewSet):
 class ImageViewSet(viewsets.ViewSet):
     # return all images of the product with this id
     def list(self, request, id):
+        try:
+            models.Product.objects.get(id=id)
+        except ObjectDoesNotExist:
+            return Response(
+                {"message": f"the product with id '{id}' does not exists"}, status=404
+            )
+
         queryset = models.ProductImage.objects.order_by("id").filter(product_id=id)
 
         is_default = request.query_params.get("is_default")
@@ -86,6 +108,13 @@ class ImageViewSet(viewsets.ViewSet):
 class ReviewViewSet(viewsets.ViewSet):
     # return all reviews of the product with this id
     def list(self, request, id):
+        try:
+            models.Product.objects.get(id=id)
+        except ObjectDoesNotExist:
+            return Response(
+                {"message": f"the product with id '{id}' does not exists"}, status=404
+            )
+
         queryset = models.Review.objects.order_by("id").filter(product_id=id)
         serialized = serializers.ReviewSerializer(queryset, many=True)
 
@@ -95,7 +124,14 @@ class ReviewViewSet(viewsets.ViewSet):
 class OrderViewSet(viewsets.ViewSet):
     # return all orders of the product with this id
     def list(self, request, id):
-        queryset = models.Order.objects.order_by("id").filter(product_id=id)
+        try:
+            models.Product.objects.get(id=id)
+        except ObjectDoesNotExist:
+            return Response(
+                {"message": f"the product with id '{id}' does not exists"}, status=404
+            )
+
+        queryset = models.Order.objects.filter(product_id=id).order_by("id")
         serialized = serializers.OrderSerializer(queryset, many=True)
 
         return Response(serialized.data, status=200)
@@ -121,9 +157,14 @@ class OffersViewSet(viewsets.ViewSet):
     def list(self, request, category=None):
         queryset = models.Product.objects.all()
         if category:
-            queryset = queryset.filter(
-                category=models.Category.objects.get(title__iexact=category).id
-            )
+            try:
+                queryset = queryset.filter(
+                    category=models.Category.objects.get(title__iexact=category).id
+                )
+            except ObjectDoesNotExist:
+                return Response(
+                    {"message": f"category '{category}' does not exists"}, status=404
+                )
 
         queryset = queryset.extra(select={"discount": "price - offer_price"}).order_by(
             "discount"
@@ -140,7 +181,14 @@ class BestSellersViewSet(viewsets.ViewSet):
     def list(self, request, category=None):
         queryset = models.Product.objects.order_by("id")
         if category:
-            queryset = queryset.filter(category_title__iexact=category)
+            try:
+                queryset = queryset.filter(
+                    category=models.Category.objects.get(title__iexact=category).id
+                )
+            except ObjectDoesNotExist:
+                return Response(
+                    {"message": f"category '{category}' does not exists"}, status=404
+                )
 
         best_sellers = models.Order.objects.values("product").annotate(
             order_count=Count("id")
