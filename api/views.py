@@ -18,6 +18,10 @@ class ProductViewSet(viewsets.ViewSet):
         # allowed filters to be passed by query parameters
         category = request.query_params.get("category")
         brand = request.query_params.get("brand")
+        min_price = request.query_params.get("min_price")
+        max_price = request.query_params.get("max_price")
+        installments = request.query_params.get("installments")
+        stock = request.query_params.get("stock")
 
         # product queryset
         queryset = models.Product.objects.order_by("id")
@@ -33,6 +37,17 @@ class ProductViewSet(viewsets.ViewSet):
             queryset = queryset.filter(
                 brand_id=get_object_or_404(models.Brand, name__iexact=brand).id
             )
+        if min_price:
+            queryset = queryset.filter(offer_price__gte=min_price)
+        if max_price:
+            queryset = queryset.filter(offer_price__lte=max_price)
+        if installments:
+            queryset = queryset.filter(installments=installments)
+        if stock:
+            if stock == "1":
+                queryset = queryset.filter(stock__gte=1)
+            elif stock == "0":
+                queryset = queryset.filter(stock=0)
 
         # return a response containing the required products
         products = []
