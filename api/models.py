@@ -82,6 +82,7 @@ class Product(models.Model):
     months_warranty = models.PositiveSmallIntegerField(
         validators=[MaxValueValidator(36)]
     )
+    is_gamer = models.BooleanField(default=False)
     brand = models.ForeignKey(Brand, on_delete=models.PROTECT)
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
 
