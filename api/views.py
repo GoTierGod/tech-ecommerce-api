@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import viewsets
@@ -14,8 +15,28 @@ def welcome(request):
 
 class ProductViewSet(viewsets.ViewSet):
     def list(self, request):
+        # allowed filters to be passed by query parameters
+        category = request.query_params.get("category")
+        brand = request.query_params.get("brand")
+
+        # product queryset
+        queryset = models.Product.objects.order_by("id")
+
+        # filter if the allowed query parameters are present
+        if category:
+            queryset = queryset.filter(
+                category_id=get_object_or_404(
+                    models.Category, title__iexact=category
+                ).id
+            )
+        if brand:
+            queryset = queryset.filter(
+                brand_id=get_object_or_404(models.Brand, name__iexact=brand).id
+            )
+
+        # return a response containing the required products
         products = []
-        for product in models.Product.objects.order_by("id"):
+        for product in queryset:
             products.append(
                 {
                     "details": serializers.ProductSerializer(product).data,
@@ -31,20 +52,26 @@ class ProductViewSet(viewsets.ViewSet):
         return Response(products, status=200)
 
     def retrieve(self, request, id):
+        # product
         product = models.Product.objects.get(id=id)
         serialized_product = serializers.ProductSerializer(product)
 
+        # product images
         images = models.ProductImage.objects.filter(product_id=id)
         serialized_images = serializers.ProductImageSerializer(images, many=True)
 
+        # number of times this product has been sold
         sold = models.Order.objects.filter(product_id=id).count()
 
+        # number of reviews this product has received
         reviews_counter = models.Review.objects.filter(product_id=id).count()
 
+        # product rating
         rating = models.Review.objects.filter(product_id=id).aggregate(Avg("rating"))[
             "rating__avg"
         ]
 
+        # return a response contained the above data
         return Response(
             {
                 "details": serialized_product.data,
@@ -64,11 +91,6 @@ class ImageViewSet(viewsets.ViewSet):
             queryset = queryset.filter(product_id=product_id)
         return queryset
 
-    # def list(self, request):
-    #     queryset = self.get_queryset()
-    #     serializer = serializers.ProductImageSerializer(queryset, many=True)
-    #     return Response(serializer.data, status=200)
-
     def retrieve(self, request, id):
         is_default = request.query_params.get("is_default")
 
@@ -86,11 +108,6 @@ class ReviewViewSet(viewsets.ViewSet):
             queryset = queryset.filter(product_id=product_id)
         return queryset
 
-    # def list(self, request):
-    #     queryset = self.get_queryset()
-    #     serializer = serializers.ReviewSerializer(queryset, many=True)
-    #     return Response(serializer.data, status=200)
-
     def retrieve(self, request, id):
         queryset = self.get_queryset(product_id=id)
         serializer = serializers.ReviewSerializer(queryset, many=True)
@@ -103,11 +120,6 @@ class OrderViewSet(viewsets.ViewSet):
         if product_id:
             queryset = queryset.filter(product_id=product_id)
         return queryset
-
-    # def list(self, request):
-    #     queryset = self.get_queryset()
-    #     serializer = serializers.OrderSerializer(queryset, many=True)
-    #     return Response(serializer.data, status=200)
 
     def retrieve(self, request, id):
         queryset = self.get_queryset(product_id=id)
