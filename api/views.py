@@ -52,11 +52,11 @@ class ProductViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(stock=0)
 
         # return a response containing the required products
-        products = []
+        serialized_products = []
         for product in queryset:
-            products.append(helpers.make_card_product(product))
+            serialized_products.append(helpers.make_card_product(product))
 
-        return Response(products, status=200)
+        return Response(serialized_products, status=200)
 
     # return a more detailed information about the product with this id
     def retrieve(self, request, id):
@@ -119,7 +119,7 @@ class CategoryViewSet(viewsets.ViewSet):
 
 class OffersViewSet(viewsets.ViewSet):
     def list(self, request, category=None):
-        queryset = models.Product.objects.order_by("id")
+        queryset = models.Product.objects.all()
         if category:
             queryset = queryset.filter(
                 category=models.Category.objects.get(title__iexact=category).id
@@ -128,9 +128,12 @@ class OffersViewSet(viewsets.ViewSet):
         queryset = queryset.extra(select={"discount": "price - offer_price"}).order_by(
             "discount"
         )
-        serialized = serializers.ProductSerializer(queryset, many=True)
 
-        return Response(serialized.data, status=200)
+        serialized_products = []
+        for product in queryset:
+            serialized_products.append(helpers.make_card_product(product))
+
+        return Response(serialized_products, status=200)
 
 
 class BestSellersViewSet(viewsets.ViewSet):
@@ -144,8 +147,10 @@ class BestSellersViewSet(viewsets.ViewSet):
         )[:25]
 
         bs_products = [item["product"] for item in best_sellers]
-
         queryset = queryset.filter(id__in=bs_products)
-        serialized = serializers.ProductSerializer(queryset, many=True)
 
-        return Response(serialized.data, status=200)
+        serialized_products = []
+        for product in queryset:
+            serialized_products.append(helpers.make_card_product(product))
+
+        return Response(serialized_products, status=200)
