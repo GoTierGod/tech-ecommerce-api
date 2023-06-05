@@ -22,12 +22,16 @@ class BrandSerializer(serializers.ModelSerializer):
 
 
 class CustomerSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
     class Meta:
         model = models.Customer
         fields = "__all__"
 
 
 class DeliveryManSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
     class Meta:
         model = models.DeliveryMan
         fields = "__all__"
@@ -43,12 +47,16 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class ProductSpecificationSerializer(serializers.ModelSerializer):
+    product = serializers.StringRelatedField()
+
     class Meta:
         model = models.ProductSpecification
         fields = "__all__"
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
+    product = serializers.StringRelatedField()
+
     class Meta:
         model = models.ProductImage
         fields = "__all__"
