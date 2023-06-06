@@ -35,7 +35,7 @@ class ProductViewSet(viewsets.ViewSet):
         if category:
             try:
                 queryset = queryset.filter(
-                    brand_id=models.Category.objects.get(name__iexact=category).id
+                    brand_id=models.Category.objects.get(title__iexact=category).id
                 )
             except ObjectDoesNotExist:
                 return Response(
