@@ -62,7 +62,7 @@ class ProductSpecification(admin.ModelAdmin):
 
 @admin.register(models.ProductImage)
 class ProductImage(admin.ModelAdmin):
-    list_display = ("id", "product", "description")
+    list_display = ("id", "product", "description", "is_default")
     list_display_links = ("product",)
 
 

@@ -111,6 +111,17 @@ class ProductImage(models.Model):
     def __str__(self) -> str:
         return self.description
 
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            if ProductImage.objects.filter(
+                product=self.product, is_default=True
+            ).exists():
+                ProductImage.objects.filter(
+                    product=self.product, is_default=True
+                ).update(is_default=False)
+
+        super().save(*args, **kwargs)
+
     class Meta:
         unique_together = ("url", "product")
 
