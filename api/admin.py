@@ -50,7 +50,7 @@ class DeliveryMan(admin.ModelAdmin):
 
 @admin.register(models.Product)
 class Product(admin.ModelAdmin):
-    list_display = ("id", "name", "price", "brand", "category")
+    list_display = ("id", "name", "price", "brand", "category", "is_gamer")
     list_display_links = ("name",)
 
 
