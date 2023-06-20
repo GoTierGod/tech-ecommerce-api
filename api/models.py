@@ -161,9 +161,6 @@ class Order(models.Model):
     quantity = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
     )
-    shipping_charge = models.DecimalField(
-        max_digits=4, decimal_places=2, editable=False
-    )
     delivered = models.BooleanField()
     purchase_date = models.DateField(auto_now_add=True, editable=False)
     delivery_term = models.DateField()
@@ -183,15 +180,6 @@ class Order(models.Model):
         return f"{self.product.name} - {self.country}, {self.city}"
 
     def save(self, *args, **kwargs):
-        if self.product.price * self.quantity < 50:
-            self.shipping_charge = self.product.price * self.quantity / 10
-        elif self.product.price * self.quantity < 100:
-            self.shipping_charge = self.product.price * self.quantity / 100
-        else:
-            self.shipping_charge = 0
-
-        self.total_cost = (
-            self.product.offer_price * self.quantity
-        ) + self.shipping_charge
+        self.total_cost = self.product.offer_price * self.quantity
 
         super().save(*args, **kwargs)
