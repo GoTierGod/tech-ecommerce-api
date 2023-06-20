@@ -183,3 +183,25 @@ class Order(models.Model):
         self.total_cost = self.product.offer_price * self.quantity
 
         super().save(*args, **kwargs)
+
+
+class CardItem(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return f"{self.customer.user.first_name} {self.customer.user.last_name} - {self.product.name}"
+
+    class Meta:
+        unique_together = ("product", "customer")
+
+
+class FavItem(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return f"{self.customer.user.first_name} {self.customer.user.last_name} - {self.product.name}"
+
+    class Meta:
+        unique_together = ("product", "customer")
