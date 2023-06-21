@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import viewsets
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.core.exceptions import ObjectDoesNotExist
 from . import serializers
 from . import models
@@ -215,6 +215,16 @@ class BestSellersViewSet(viewsets.ViewSet):
 
 class SearchViewSet(viewsets.ViewSet):
     def list(self, request, search):
-        queryset = models.Product.objects.all()
+        search_terms = str(search).split(",")
 
-        return Response({}, status=200)
+        query = Q()
+        for term in search_terms:
+            query |= Q(name__icontains=term)
+            query |= Q(category__title__icontains=term)
+            query |= Q(brand__name__icontains=term)
+
+        queryset = models.Product.objects.filter(query)
+
+        serialized_products_data = [helpers.make_card_product(x) for x in queryset]
+
+        return Response(serialized_products_data, status=200)
