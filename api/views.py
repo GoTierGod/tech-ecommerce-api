@@ -18,6 +18,8 @@ def welcome(request):
 class ProductViewSet(viewsets.ViewSet):
     # return less detailed information of a list of products
     def list(self, request):
+        queryset = models.Product.objects.all()
+
         # allowed filters to be passed as query parameters
         category = request.query_params.get("category")
         brand = request.query_params.get("brand")
@@ -27,9 +29,6 @@ class ProductViewSet(viewsets.ViewSet):
         stock = request.query_params.get("stock")
         is_gamer = request.query_params.get("is_gamer")
         limit = request.query_params.get("limit")
-
-        # product queryset
-        queryset = models.Product.objects.all()
 
         # filter if the allowed query parameters are present
         if category:
@@ -216,7 +215,7 @@ class SearchViewSet(viewsets.ViewSet):
             query |= Q(category__title__icontains=term)
             query |= Q(brand__name__icontains=term)
 
-        queryset = models.Product.objects.filter(query)
+        queryset = models.Product.objects.filter(query)[:10]
 
         serialized_products_data = [helpers.make_card_product(x) for x in queryset]
 
