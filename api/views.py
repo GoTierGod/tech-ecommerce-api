@@ -206,6 +206,9 @@ class BestSellersViewSet(viewsets.ViewSet):
 
 class SearchViewSet(viewsets.ViewSet):
     def list(self, request, search):
+        page = request.query_params.get("page")
+        page = int(page) if page else None
+
         search_terms = str(search).split(",")
 
         # create three searchs per each search term
@@ -215,7 +218,13 @@ class SearchViewSet(viewsets.ViewSet):
             query |= Q(category__title__icontains=term)
             query |= Q(brand__name__icontains=term)
 
-        queryset = models.Product.objects.filter(query)[:10]
+        queryset = models.Product.objects.filter(query)[
+            10 * page - 10
+            if (page and page > 0)
+            else 0 : 10 * page
+            if (page and page > 0)
+            else 10
+        ]
 
         serialized_products_data = [helpers.make_card_product(x) for x in queryset]
 
