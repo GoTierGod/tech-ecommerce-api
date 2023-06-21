@@ -16,4 +16,5 @@ urlpatterns = [
     path(
         "best-sellers/<str:category>", views.BestSellersViewSet.as_view({"get": "list"})
     ),
+    path("search/<str:search>", views.SearchViewSet.as_view({"get": "list"})),
 ]

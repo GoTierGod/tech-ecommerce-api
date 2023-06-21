@@ -29,7 +29,7 @@ class ProductViewSet(viewsets.ViewSet):
         limit = request.query_params.get("limit")
 
         # product queryset
-        queryset = models.Product.objects.order_by("id")
+        queryset = models.Product.objects.all()
 
         # filter if the allowed query parameters are present
         if category:
@@ -102,7 +102,7 @@ class ImageViewSet(viewsets.ViewSet):
                 {"message": f"the product with id '{id}' does not exists"}, status=404
             )
 
-        queryset = models.ProductImage.objects.order_by("id").filter(product_id=id)
+        queryset = models.ProductImage.objects.all().filter(product_id=id)
 
         is_default = request.query_params.get("is_default")
         if is_default:
@@ -122,7 +122,7 @@ class ReviewViewSet(viewsets.ViewSet):
                 {"message": f"the product with id '{id}' does not exists"}, status=404
             )
 
-        queryset = models.Review.objects.order_by("id").filter(product_id=id)
+        queryset = models.Review.objects.all().filter(product_id=id)
         serialized = serializers.ReviewSerializer(queryset, many=True)
 
         return Response(serialized.data, status=200)
@@ -138,7 +138,7 @@ class OrderViewSet(viewsets.ViewSet):
                 {"message": f"the product with id '{id}' does not exists"}, status=404
             )
 
-        queryset = models.Order.objects.filter(product_id=id).order_by("id")
+        queryset = models.Order.objects.filter(product_id=id).all()
         serialized = serializers.OrderSerializer(queryset, many=True)
 
         return Response(serialized.data, status=200)
@@ -146,7 +146,7 @@ class OrderViewSet(viewsets.ViewSet):
 
 class BrandViewSet(viewsets.ViewSet):
     def list(self, request):
-        queryset = models.Brand.objects.order_by("id")
+        queryset = models.Brand.objects.all()
         serialized = serializers.BrandSerializer(queryset, many=True)
 
         return Response(serialized.data, status=200)
@@ -154,7 +154,7 @@ class BrandViewSet(viewsets.ViewSet):
 
 class CategoryViewSet(viewsets.ViewSet):
     def list(self, request):
-        queryset = models.Category.objects.order_by("id")
+        queryset = models.Category.objects.all()
         serialized = serializers.CategorySerializer(queryset, many=True)
 
         return Response(serialized.data, status=200)
@@ -188,7 +188,7 @@ class OffersViewSet(viewsets.ViewSet):
 
 class BestSellersViewSet(viewsets.ViewSet):
     def list(self, request, category=None):
-        queryset = models.Product.objects.order_by("id")
+        queryset = models.Product.objects.all()
         if category:
             try:
                 queryset = queryset.filter(
@@ -211,3 +211,10 @@ class BestSellersViewSet(viewsets.ViewSet):
             serialized_products.append(helpers.make_card_product(product))
 
         return Response(serialized_products, status=200)
+
+
+class SearchViewSet(viewsets.ViewSet):
+    def list(self, request, search):
+        queryset = models.Product.objects.all()
+
+        return Response({}, status=200)
