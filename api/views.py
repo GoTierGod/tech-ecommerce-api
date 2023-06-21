@@ -63,6 +63,8 @@ class ProductViewSet(viewsets.ViewSet):
             queryset = queryset.filter(is_gamer=strtobool(is_gamer))
         if limit:
             queryset = queryset[: int(limit)]
+        else:
+            queryset = queryset[:10]
 
         serialized_products_data = [helpers.make_card_product(x) for x in queryset]
 
