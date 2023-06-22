@@ -211,7 +211,6 @@ class SearchViewSet(viewsets.ViewSet):
 
         search_terms = str(search).split(",")
 
-        # create three searchs per each search term
         query = Q()
         for term in search_terms:
             query |= Q(name__icontains=term)
