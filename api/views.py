@@ -19,18 +19,22 @@ def welcome(request):
 class ProductViewSet(viewsets.ViewSet):
     # return a less detailed information of a list of products
     def list(self, request):
+        page = request.query_params.get("page")
+        if page:
+            try:
+                page = int(page)
+            except ValueError:
+                page = 1
+
         queryset = models.Product.objects.all()
         queryset = helpers.product_filters(queryset, request)
         if len(queryset) == 0:
             return Response({"message": "not found"}, status=404)
 
-        limit = request.query_params.get("limit")
-        if limit:
-            queryset = queryset[: int(limit)]
-        else:
-            queryset = queryset[:10]
+        paginator = Paginator(queryset, 10)
+        page_queryset = paginator.get_page(page)
 
-        serialized_products_data = [helpers.make_card_product(x) for x in queryset]
+        serialized_products_data = [helpers.make_card_product(x) for x in page_queryset]
 
         return Response(serialized_products_data, status=200)
 
@@ -157,7 +161,7 @@ class BestSellersViewSet(viewsets.ViewSet):
         best_sellers = models.Order.objects.values("product").annotate(
             order_count=Count("id")
         )[:25]
-        # products presents in the top 25 best sellers products
+        # products presents in the top 25, above
         bs_products = [item["product"] for item in best_sellers]
 
         # leave only best seller products in our queryset
@@ -171,7 +175,11 @@ class BestSellersViewSet(viewsets.ViewSet):
 class SearchViewSet(viewsets.ViewSet):
     def list(self, request, search):
         page = request.query_params.get("page")
-        page = int(page) if page else 1
+        if page:
+            try:
+                page = int(page)
+            except ValueError:
+                page = 1
 
         search_terms = str(search).split(",")
 
