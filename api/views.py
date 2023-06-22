@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework import viewsets
 from django.db.models import Count, Q
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.paginator import Paginator
 from . import serializers
 from . import models
 from . import helpers
@@ -16,50 +17,14 @@ def welcome(request):
 
 
 class ProductViewSet(viewsets.ViewSet):
-    # return less detailed information of a list of products
+    # return a less detailed information of a list of products
     def list(self, request):
         queryset = models.Product.objects.all()
+        queryset = helpers.product_filters(queryset, request)
+        if len(queryset) == 0:
+            return Response({"message": "not found"}, status=404)
 
-        # allowed filters to be passed as query parameters
-        category = request.query_params.get("category")
-        brand = request.query_params.get("brand")
-        min_price = request.query_params.get("min_price")
-        max_price = request.query_params.get("max_price")
-        installments = request.query_params.get("installments")
-        stock = request.query_params.get("stock")
-        is_gamer = request.query_params.get("is_gamer")
         limit = request.query_params.get("limit")
-
-        # filter if the allowed query parameters are present
-        if category:
-            try:
-                queryset = queryset.filter(category__title__iexact=category)
-            except ObjectDoesNotExist:
-                return Response(
-                    {"message": f"the category '{category}' does not exists"},
-                    status=404,
-                )
-        if brand:
-            try:
-                queryset = queryset.filter(brand__name__iexact=brand)
-            except ObjectDoesNotExist:
-                return Response(
-                    {"message": f"the brand '{brand}' does not exists"},
-                    status=404,
-                )
-        if min_price:
-            queryset = queryset.filter(offer_price__gte=min_price)
-        if max_price:
-            queryset = queryset.filter(offer_price__lte=max_price)
-        if installments:
-            queryset = queryset.filter(installments=installments)
-        if stock:
-            if strtobool(stock):
-                queryset = queryset.filter(stock__gte=1)
-            else:
-                queryset = queryset.filter(stock=0)
-        if is_gamer:
-            queryset = queryset.filter(is_gamer=strtobool(is_gamer))
         if limit:
             queryset = queryset[: int(limit)]
         else:
@@ -71,7 +36,6 @@ class ProductViewSet(viewsets.ViewSet):
 
     # return a more detailed information about the product with this id
     def retrieve(self, request, id):
-        # product
         try:
             product = models.Product.objects.get(id=id)
         except ObjectDoesNotExist:
@@ -207,25 +171,24 @@ class BestSellersViewSet(viewsets.ViewSet):
 class SearchViewSet(viewsets.ViewSet):
     def list(self, request, search):
         page = request.query_params.get("page")
-        page = int(page) if page else None
+        page = int(page) if page else 1
 
         search_terms = str(search).split(",")
 
-        # create three searchs per each search term
         query = Q()
         for term in search_terms:
             query |= Q(name__icontains=term)
             query |= Q(category__title__icontains=term)
             query |= Q(brand__name__icontains=term)
 
-        queryset = models.Product.objects.filter(query)[
-            10 * page - 10
-            if (page and page > 0)
-            else 0 : 10 * page
-            if (page and page > 0)
-            else 10
-        ]
+        queryset = models.Product.objects.all()
+        queryset = helpers.product_filters(queryset, request)
+        if len(queryset) == 0:
+            return Response({"message": "not found"}, status=404)
 
-        serialized_products_data = [helpers.make_card_product(x) for x in queryset]
+        paginator = Paginator(queryset.filter(query), 10)
+        page_queryset = paginator.get_page(page)
+
+        serialized_products_data = [helpers.make_card_product(x) for x in page_queryset]
 
         return Response(serialized_products_data, status=200)
