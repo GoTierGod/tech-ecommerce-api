@@ -190,9 +190,14 @@ class SearchViewSet(viewsets.ViewSet):
             query |= Q(brand__name__icontains=term)
 
         queryset = models.Product.objects.all()
+
         queryset = helpers.product_filters(queryset, request)
         if len(queryset) == 0:
             return Response({"message": "not found"}, status=404)
+
+        order_by_field = request.query_params.get("order_by")
+        if order_by_field:
+            queryset = queryset.order_by(order_by_field)
 
         paginator = Paginator(queryset.filter(query), 10)
         page_queryset = paginator.get_page(page)
