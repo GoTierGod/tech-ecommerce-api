@@ -172,7 +172,7 @@ class BestSellersViewSet(viewsets.ViewSet):
         return Response(serialized_products_data, status=200)
 
 
-class SearchViewSet(viewsets.ViewSet):
+class SearchProductViewSet(viewsets.ViewSet):
     def list(self, request, search):
         page = request.query_params.get("page")
         if page:
@@ -205,3 +205,37 @@ class SearchViewSet(viewsets.ViewSet):
         serialized_products_data = [helpers.make_card_product(x) for x in page_queryset]
 
         return Response(serialized_products_data, status=200)
+
+
+class SearchProductCategoriesViewSet(viewsets.ViewSet):
+    def list(self, request, search):
+        search_terms = str(search).split(",")
+
+        query = Q()
+        for term in search_terms:
+            query |= Q(name__icontains=term)
+            query |= Q(category__title__icontains=term)
+            query |= Q(brand__name__icontains=term)
+
+        queryset = models.Product.objects.all()
+        filtered = set(x.category for x in queryset.filter(query))
+        serialized = serializers.CategorySerializer(filtered, many=True)
+
+        return Response(serialized.data, status=200)
+
+
+class SearchProductBrandsViewSet(viewsets.ViewSet):
+    def list(self, request, search):
+        search_terms = str(search).split(",")
+
+        query = Q()
+        for term in search_terms:
+            query |= Q(name__icontains=term)
+            query |= Q(category__title__icontains=term)
+            query |= Q(brand__name__icontains=term)
+
+        queryset = models.Product.objects.all()
+        filtered = set(x.brand for x in queryset.filter(query))
+        serialized = serializers.BrandSerializer(filtered, many=True)
+
+        return Response(serialized.data, status=200)
