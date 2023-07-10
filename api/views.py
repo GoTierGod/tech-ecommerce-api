@@ -191,6 +191,13 @@ class SearchProductViewSet(viewsets.ViewSet):
             query |= Q(brand__name__icontains=term)
 
         queryset = models.Product.objects.all()
+        queryset = queryset.filter(query)
+
+        categories = set(x.category for x in queryset)
+        serialized_categories = serializers.CategorySerializer(categories, many=True)
+
+        brands = set(x.brand for x in queryset)
+        serialized_brands = serializers.BrandSerializer(brands, many=True)
 
         queryset = helpers.product_filters(queryset, request)
 
@@ -198,7 +205,7 @@ class SearchProductViewSet(viewsets.ViewSet):
         if order_by_field:
             queryset = queryset.order_by(order_by_field)
 
-        paginator = Paginator(queryset.filter(query), 10)
+        paginator = Paginator(queryset, 10)
         page_queryset = paginator.get_page(page)
 
         if len(page_queryset) == 0:
@@ -206,38 +213,12 @@ class SearchProductViewSet(viewsets.ViewSet):
 
         serialized_products_data = [helpers.make_card_product(x) for x in page_queryset]
 
-        return Response(serialized_products_data, status=200)
-
-
-class SearchProductCategoriesViewSet(viewsets.ViewSet):
-    def list(self, request, search):
-        search_terms = str(search).split(",")
-
-        query = Q()
-        for term in search_terms:
-            query |= Q(name__icontains=term)
-            query |= Q(category__title__icontains=term)
-            query |= Q(brand__name__icontains=term)
-
-        queryset = models.Product.objects.all()
-        filtered = set(x.category for x in queryset.filter(query))
-        serialized = serializers.CategorySerializer(filtered, many=True)
-
-        return Response(serialized.data, status=200)
-
-
-class SearchProductBrandsViewSet(viewsets.ViewSet):
-    def list(self, request, search):
-        search_terms = str(search).split(",")
-
-        query = Q()
-        for term in search_terms:
-            query |= Q(name__icontains=term)
-            query |= Q(category__title__icontains=term)
-            query |= Q(brand__name__icontains=term)
-
-        queryset = models.Product.objects.all()
-        filtered = set(x.brand for x in queryset.filter(query))
-        serialized = serializers.BrandSerializer(filtered, many=True)
-
-        return Response(serialized.data, status=200)
+        return Response(
+            {
+                "pages": paginator.num_pages,
+                "products": serialized_products_data,
+                "categories": serialized_categories.data,
+                "brands": serialized_brands.data,
+            },
+            status=200,
+        )
