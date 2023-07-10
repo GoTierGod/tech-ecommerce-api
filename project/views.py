@@ -4,4 +4,4 @@ from rest_framework.decorators import api_view
 
 @api_view()
 def home(request):
-    return Response("Hello world")
+    return Response({"message": "Bad request"}, status=400)

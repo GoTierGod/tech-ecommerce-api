@@ -13,7 +13,7 @@ from distutils.util import strtobool
 # Create your views here.
 @api_view()
 def welcome(request):
-    return Response("Welcome")
+    return Response({"message": "Ok"}, status=200)
 
 
 class ProductViewSet(viewsets.ViewSet):
