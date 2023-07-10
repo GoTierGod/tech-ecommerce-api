@@ -28,11 +28,12 @@ class ProductViewSet(viewsets.ViewSet):
 
         queryset = models.Product.objects.all()
         queryset = helpers.product_filters(queryset, request)
-        if len(queryset) == 0:
-            return Response({"message": "not found"}, status=404)
 
         paginator = Paginator(queryset, 10)
         page_queryset = paginator.get_page(page)
+
+        if len(page_queryset) == 0:
+            return Response({"message": "not found"}, status=404)
 
         serialized_products_data = [helpers.make_card_product(x) for x in page_queryset]
 
@@ -192,8 +193,6 @@ class SearchProductViewSet(viewsets.ViewSet):
         queryset = models.Product.objects.all()
 
         queryset = helpers.product_filters(queryset, request)
-        if len(queryset) == 0:
-            return Response({"message": "not found"}, status=404)
 
         order_by_field = request.query_params.get("order_by")
         if order_by_field:
@@ -201,6 +200,9 @@ class SearchProductViewSet(viewsets.ViewSet):
 
         paginator = Paginator(queryset.filter(query), 10)
         page_queryset = paginator.get_page(page)
+
+        if len(page_queryset) == 0:
+            return Response({"message": "not found"}, status=404)
 
         serialized_products_data = [helpers.make_card_product(x) for x in page_queryset]
 
