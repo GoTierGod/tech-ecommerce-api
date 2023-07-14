@@ -7,9 +7,9 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 @api_view(["GET"])
 def get_routers(request):
-    routes = ["/api/token/", "/api/token/refresh"]
+    routes = ["/api/", "/api/token/", "/api/token/refresh"]
 
-    return Response(routes)
+    return Response(routes, status=200)
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):

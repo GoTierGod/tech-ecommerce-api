@@ -11,9 +11,22 @@ from distutils.util import strtobool
 
 
 # Create your views here.
-@api_view()
+@api_view(["GET"])
 def welcome(request):
-    return Response({"message": "Ok"}, status=200)
+    routes = [
+        "/api/products/",
+        "/api/products/<int:id>",
+        "/api/products/images/<int:id>",
+        "/api/products/reviews/<int:id>",
+        "/api/products/orders/<int:id>",
+        "/api/brands/",
+        "/api/categories/",
+        "/api/offers",
+        "/api/offers/<str:category>",
+        "/api/search/<str:search>",
+    ]
+
+    return Response(routes, status=200)
 
 
 class ProductViewSet(viewsets.ViewSet):
