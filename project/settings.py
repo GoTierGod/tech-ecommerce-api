@@ -28,9 +28,13 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(strtobool(os.environ.get("DEBUG_MODE") or "False"))
+DEBUG = strtobool(os.environ.get("DEBUG_MODE") or "False")
 
-ALLOWED_HOSTS = [".vercel.app"]
+ALLOWED_HOSTS = (
+    [".vercel.app", "127.0.0.1"]
+    if strtobool(os.environ.get("DEBUG_MODE") or "False")
+    else [".vercel.app"]
+)
 
 
 # Application definition
@@ -47,10 +51,13 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "api",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -192,3 +199,11 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
+
+CORS_ORIGIN_WHITELIST = (
+    [
+        "http://localhost:3000",
+    ]
+    if strtobool(os.environ.get("DEBUG_MODE") or "False")
+    else []
+)
