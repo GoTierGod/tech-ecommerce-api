@@ -1,6 +1,8 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.db.models import Count, Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
@@ -24,6 +26,7 @@ def welcome(request):
         "/api/offers",
         "/api/offers/<str:category>",
         "/api/search/<str:search>",
+        "/api/user/",
     ]
 
     return Response(routes, status=200)
@@ -235,3 +238,17 @@ class SearchProductViewSet(viewsets.ViewSet):
             },
             status=200,
         )
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def retrieve(self, request):
+        username = request.data["username"]
+
+        try:
+            customer = models.Customer.objects.get(user__username=username)
+            serialized_customer = serializers.CustomerSerializer(customer)
+            return Response(serialized_customer.data, status=200)
+        except ObjectDoesNotExist:
+            return Response({"message": "not found"}, status=404)

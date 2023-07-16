@@ -24,4 +24,9 @@ urlpatterns = [
     ),
     # search
     path("search/<str:search>", views.SearchProductViewSet.as_view({"get": "list"})),
+    # user
+    path(
+        "customer/",
+        views.UserViewSet.as_view({"post": "retrieve"}),
+    ),
 ]
