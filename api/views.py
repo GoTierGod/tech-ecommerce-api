@@ -251,4 +251,9 @@ class UserViewSet(viewsets.ModelViewSet):
             serialized_customer = serializers.CustomerSerializer(customer)
             return Response(serialized_customer.data, status=200)
         except ObjectDoesNotExist:
-            return Response({"message": "not found"}, status=404)
+            try:
+                user = models.User.objects.get(username=username)
+                serialized_user = serializers.UserSerializer(user)
+                return Response(serialized_user.data, status=200)
+            except ObjectDoesNotExist:
+                return Response({"message": "not found"}, status=404)
