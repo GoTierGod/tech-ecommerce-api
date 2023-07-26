@@ -241,11 +241,11 @@ class SearchProductViewSet(viewsets.ViewSet):
         )
 
 
-class CustomerViewSet(viewsets.ModelViewSet):
+class CustomerViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     def retrieve(self, request):
-        username = request.data["username"]
+        username = request.user.username
 
         try:
             customer = models.Customer.objects.get(user__username=username)
