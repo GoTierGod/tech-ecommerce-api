@@ -27,6 +27,7 @@ def welcome(request):
         "/api/offers/<str:category>",
         "/api/search/<str:search>",
         "/api/customer/",
+        "/api/edit/",
     ]
 
     return Response(routes, status=200)
@@ -252,3 +253,58 @@ class CustomerViewSet(viewsets.ModelViewSet):
             return Response(serialized_customer.data, status=200)
         except ObjectDoesNotExist:
             return Response({"message": "not found"}, status=404)
+
+
+class EditViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def update(self, request):
+        try:
+            username = request.user.username
+            customer = models.Customer.objects.get(user__username=username)
+
+            # Update customer data based on request data (if provided)
+            new_username = request.data.get("username")
+            new_email = request.data.get("email")
+            new_password = request.data.get("password")
+            new_phone = request.data.get("phone")
+            new_country = request.data.get("country")
+            new_city = request.data.get("city")
+            new_address = request.data.get("address")
+            new_firstname = request.data.get("firstname")
+            new_lastname = request.data.get("lastname")
+            new_birthdate = request.data.get("birthdate")
+            new_gender = request.data.get("gender")
+
+            if new_username:
+                customer.user.username = new_username
+            if new_email:
+                customer.user.email = new_email
+            if new_password:
+                customer.user.password = new_password
+            if new_phone:
+                customer.phone = new_phone
+            if new_country:
+                customer.country = new_country
+            if new_city:
+                customer.city = new_city
+            if new_address:
+                customer.address = new_address
+            if new_firstname:
+                customer.firstname = new_firstname
+            if new_lastname:
+                customer.lastname = new_lastname
+            if new_birthdate:
+                customer.birthdate = new_birthdate
+            if new_gender:
+                customer.gender = new_gender
+
+            # Save the updated customer object
+            customer.save()
+
+            # return Response({"customer": new_gender}, status=200)
+            return Response(
+                {"message": "Customer data updated successfully"}, status=200
+            )
+        except:
+            return Response({"message": "Something went wrong"}, status=400)
