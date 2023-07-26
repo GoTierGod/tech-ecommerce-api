@@ -26,7 +26,7 @@ def welcome(request):
         "/api/offers",
         "/api/offers/<str:category>",
         "/api/search/<str:search>",
-        "/api/user/",
+        "/api/customer/",
     ]
 
     return Response(routes, status=200)
@@ -240,7 +240,7 @@ class SearchProductViewSet(viewsets.ViewSet):
         )
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class CustomerViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def retrieve(self, request):
@@ -251,9 +251,4 @@ class UserViewSet(viewsets.ModelViewSet):
             serialized_customer = serializers.CustomerSerializer(customer)
             return Response(serialized_customer.data, status=200)
         except ObjectDoesNotExist:
-            try:
-                user = models.User.objects.get(username=username)
-                serialized_user = serializers.UserSerializer(user)
-                return Response(serialized_user.data, status=200)
-            except ObjectDoesNotExist:
-                return Response({"message": "not found"}, status=404)
+            return Response({"message": "not found"}, status=404)
