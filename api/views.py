@@ -266,7 +266,8 @@ class EditViewSet(viewsets.ViewSet):
             # Update customer data based on request data (if provided)
             new_username = request.data.get("username")
             new_email = request.data.get("email")
-            new_password = request.data.get("password")
+            password = request.data.get("password")
+            new_password = request.data.get("newpass")
             new_phone = request.data.get("phone")
             new_country = request.data.get("country")
             new_city = request.data.get("city")
@@ -276,12 +277,19 @@ class EditViewSet(viewsets.ViewSet):
             new_birthdate = request.data.get("birthdate")
             new_gender = request.data.get("gender")
 
+            if new_email:
+                if customer.user.check_password(password):
+                    customer.user.email = new_email
+                else:
+                    return Response({"message": "Incorrect password"}, status=401)
+            if new_password:
+                if customer.user.check_password(password):
+                    customer.user.password = new_password
+                else:
+                    return Response({"message": "Incorrect password"}, status=401)
+
             if new_username:
                 customer.user.username = new_username
-            if new_email:
-                customer.user.email = new_email
-            if new_password:
-                customer.user.password = new_password
             if new_phone:
                 customer.phone = new_phone
             if new_country:
@@ -291,9 +299,9 @@ class EditViewSet(viewsets.ViewSet):
             if new_address:
                 customer.address = new_address
             if new_firstname:
-                customer.firstname = new_firstname
+                customer.user.first_name = new_firstname
             if new_lastname:
-                customer.lastname = new_lastname
+                customer.user.last_name = new_lastname
             if new_birthdate:
                 customer.birthdate = new_birthdate
             if new_gender:
