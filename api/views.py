@@ -1,8 +1,7 @@
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.db.models import Count, Q
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
@@ -11,8 +10,16 @@ from . import models
 from . import helpers
 from distutils.util import strtobool
 
+# PASSWORD VALIDATION
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
-# Create your views here.
+# EMAIL VALIDATION
+from django.core.validators import validate_email
+
+
+# ENDPOINTS
+@permission_classes([IsAuthenticated])
 @api_view(["GET"])
 def welcome(request):
     routes = [
@@ -27,7 +34,7 @@ def welcome(request):
         "/api/offers/<str:category>",
         "/api/search/<str:search>",
         "/api/customer/",
-        "/api/edit/",
+        "/api/customer/update/",
     ]
 
     return Response(routes, status=200)
@@ -255,7 +262,7 @@ class CustomerViewSet(viewsets.ViewSet):
             return Response({"message": "not found"}, status=404)
 
 
-class EditViewSet(viewsets.ViewSet):
+class UpdateCustomerViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     def update(self, request):
@@ -277,17 +284,29 @@ class EditViewSet(viewsets.ViewSet):
             new_birthdate = request.data.get("birthdate")
             new_gender = request.data.get("gender")
 
+            # Update email if the given password is correct and the email is in a valid format
             if new_email:
                 if customer.user.check_password(password):
-                    customer.user.email = new_email
-                else:
-                    return Response({"message": "Incorrect password"}, status=401)
-            if new_password:
-                if customer.user.check_password(password):
-                    customer.user.password = new_password
+                    try:
+                        validate_email(new_email)
+                        customer.user.email = new_email
+                    except ValidationError as e:
+                        return Response({"message": e.messages}, status=400)
                 else:
                     return Response({"message": "Incorrect password"}, status=401)
 
+            # Update password if the given password is correct and the new password is in a valid format
+            if new_password:
+                if customer.user.check_password(password):
+                    try:
+                        validate_password(new_password, user=customer.user)
+                        customer.user.password = new_password
+                    except ValidationError as e:
+                        return Response({"message": e.messages}, status=400)
+                else:
+                    return Response({"message": "Incorrect password"}, status=401)
+
+            # Update other customer information without requiring password
             if new_username:
                 customer.user.username = new_username
             if new_phone:
@@ -310,7 +329,6 @@ class EditViewSet(viewsets.ViewSet):
             # Save the updated customer object
             customer.save()
 
-            # return Response({"customer": new_gender}, status=200)
             return Response(
                 {"message": "Customer data updated successfully"}, status=200
             )

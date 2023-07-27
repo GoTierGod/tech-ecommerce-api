@@ -29,5 +29,5 @@ urlpatterns = [
         "customer/",
         views.CustomerViewSet.as_view({"post": "retrieve"}),
     ),
-    path("edit/", views.EditViewSet.as_view({"post": "update"})),
+    path("customer/update/", views.UpdateCustomerViewSet.as_view({"post": "update"})),
 ]
