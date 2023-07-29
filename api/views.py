@@ -9,6 +9,7 @@ from . import serializers
 from . import models
 from . import helpers
 from distutils.util import strtobool
+from datetime import datetime
 
 # PASSWORD VALIDATION
 from django.contrib.auth.password_validation import validate_password
@@ -334,3 +335,52 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
             )
         except:
             return Response({"message": "Something went wrong"}, status=400)
+
+
+class CreateCustomerViewSet(viewsets.ViewSet):
+    def create(self, request):
+        username = request.data["username"]
+        email = request.data["email"]
+        password = request.data["password"]
+        birthdate = request.data["birthdate"]
+
+        try:
+            if models.User.objects.filter(username=username).exists():
+                return Response(
+                    {"message": f'User with username "{username}" already exists'}
+                )
+            validate_email(email)
+            validate_password(password)
+            # Validate the age (minimum 18 years old)
+            birthdate_date = datetime.strptime(birthdate, "%Y-%m-%d").date()
+            if self.calculate_age(birthdate_date) < 18:
+                return Response(
+                    {"message": "You must be at least 18 years old to register"},
+                    status=400,
+                )
+        except ValidationError as e:
+            return Response({"message": e}, status=400)
+
+        try:
+            new_user = models.User.objects.create_user(
+                username=str(username), email=str(email), password=str(password)
+            )
+            new_customer = models.Customer.objects.create(
+                birthdate=birthdate, user=new_user
+            )
+
+            new_user.save()
+            new_customer.save()
+        except Exception:
+            return Response({"message": "Something went wrong"}, status=400)
+
+        return Response({"message": "User successfully created"}, status=201)
+
+    def calculate_age(self, birthdate):
+        today = datetime.now().date()
+        age = (
+            today.year
+            - birthdate.year
+            - ((today.month, today.day) < (birthdate.month, birthdate.day))
+        )
+        return age
