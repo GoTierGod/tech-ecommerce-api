@@ -36,6 +36,7 @@ def welcome(request):
         "/api/search/<str:search>",
         "/api/customer/",
         "/api/customer/update/",
+        "/api/customer/create/",
     ]
 
     return Response(routes, status=200)
@@ -58,7 +59,7 @@ class ProductViewSet(viewsets.ViewSet):
         page_queryset = paginator.get_page(page)
 
         if len(page_queryset) == 0:
-            return Response({"message": "not found"}, status=404)
+            return Response({"message": "Not found"}, status=404)
 
         serialized_products_data = [helpers.make_card_product(x) for x in page_queryset]
 
@@ -70,7 +71,7 @@ class ProductViewSet(viewsets.ViewSet):
             product = models.Product.objects.get(id=id)
         except ObjectDoesNotExist:
             return Response(
-                {"message": f"the product with id '{id}' does not exists"}, status=404
+                {"message": f'The product with id "{id}" does not exists'}, status=404
             )
 
         return Response(
@@ -86,7 +87,7 @@ class ImageViewSet(viewsets.ViewSet):
             models.Product.objects.get(id=id)
         except ObjectDoesNotExist:
             return Response(
-                {"message": f"the product with id '{id}' does not exists"}, status=404
+                {"message": f'The product with id "{id}" does not exists'}, status=404
             )
 
         queryset = models.ProductImage.objects.all().filter(product_id=id)
@@ -106,7 +107,7 @@ class ReviewViewSet(viewsets.ViewSet):
             models.Product.objects.get(id=id)
         except ObjectDoesNotExist:
             return Response(
-                {"message": f"the product with id '{id}' does not exists"}, status=404
+                {"message": f'The product with id "{id}" does not exists'}, status=404
             )
 
         queryset = models.Review.objects.all().filter(product_id=id)
@@ -122,7 +123,7 @@ class OrderViewSet(viewsets.ViewSet):
             models.Product.objects.get(id=id)
         except ObjectDoesNotExist:
             return Response(
-                {"message": f"the product with id '{id}' does not exists"}, status=404
+                {"message": f'The product with id "{id}" does not exists'}, status=404
             )
 
         queryset = models.Order.objects.filter(product_id=id).all()
@@ -158,7 +159,7 @@ class OffersViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(category__title__iexact=category)
             except ObjectDoesNotExist:
                 return Response(
-                    {"message": f"category '{category}' does not exists"}, status=404
+                    {"message": f'Category "{category}" does not exists'}, status=404
                 )
 
         # sort products by amount discounted in descending order
@@ -180,7 +181,7 @@ class BestSellersViewSet(viewsets.ViewSet):
                 queryset = queryset.filter(category__title__iexact=category)
             except ObjectDoesNotExist:
                 return Response(
-                    {"message": f"category '{category}' does not exists"}, status=404
+                    {"message": f'Category "{category}" does not exists'}, status=404
                 )
 
         # top 25 best seller products grouping orders by product ID
@@ -234,7 +235,7 @@ class SearchProductViewSet(viewsets.ViewSet):
         page_queryset = paginator.get_page(page)
 
         if len(page_queryset) == 0:
-            return Response({"message": "not found"}, status=404)
+            return Response({"message": "Not found"}, status=404)
 
         serialized_products_data = [helpers.make_card_product(x) for x in page_queryset]
 
@@ -260,7 +261,7 @@ class CustomerViewSet(viewsets.ViewSet):
             serialized_customer = serializers.CustomerSerializer(customer)
             return Response(serialized_customer.data, status=200)
         except ObjectDoesNotExist:
-            return Response({"message": "not found"}, status=404)
+            return Response({"message": "Not found"}, status=404)
 
 
 class UpdateCustomerViewSet(viewsets.ViewSet):
@@ -292,7 +293,7 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
                         validate_email(new_email)
                         customer.user.email = new_email
                     except ValidationError as e:
-                        return Response({"message": e.messages}, status=400)
+                        return Response({"message": e.message}, status=400)
                 else:
                     return Response({"message": "Incorrect password"}, status=401)
 
@@ -303,7 +304,7 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
                         validate_password(new_password, user=customer.user)
                         customer.user.password = new_password
                     except ValidationError as e:
-                        return Response({"message": e.messages}, status=400)
+                        return Response({"message": e.message}, status=400)
                 else:
                     return Response({"message": "Incorrect password"}, status=401)
 
@@ -330,9 +331,7 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
             # Save the updated customer object
             customer.save()
 
-            return Response(
-                {"message": "Customer data updated successfully"}, status=200
-            )
+            return Response({"message": "Updated successfully"}, status=200)
         except:
             return Response({"message": "Something went wrong"}, status=400)
 
@@ -347,7 +346,8 @@ class CreateCustomerViewSet(viewsets.ViewSet):
         try:
             if models.User.objects.filter(username=username).exists():
                 return Response(
-                    {"message": f'User with username "{username}" already exists'}
+                    {"message": f'User with username "{username}" already exists'},
+                    status=400,
                 )
             validate_email(email)
             validate_password(password)
@@ -359,7 +359,7 @@ class CreateCustomerViewSet(viewsets.ViewSet):
                     status=400,
                 )
         except ValidationError as e:
-            return Response({"message": e}, status=400)
+            return Response({"message": e.message}, status=400)
 
         try:
             new_user = models.User.objects.create_user(
@@ -374,7 +374,7 @@ class CreateCustomerViewSet(viewsets.ViewSet):
         except Exception:
             return Response({"message": "Something went wrong"}, status=400)
 
-        return Response({"message": "User successfully created"}, status=201)
+        return Response({"message": "Successfully created"}, status=201)
 
     def calculate_age(self, birthdate):
         today = datetime.now().date()
