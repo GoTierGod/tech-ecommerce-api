@@ -271,6 +271,7 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
         try:
             username = request.user.username
             customer = models.Customer.objects.get(user__username=username)
+            user = models.User.objects.get(username=username)
 
             # Update customer data based on request data (if provided)
             new_username = request.data.get("username")
@@ -298,7 +299,7 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
                                 status=409,
                             )
                         validate_email(new_email)
-                        customer.user.email = new_email
+                        user.email = new_email
                     except ValidationError as e:
                         return Response({"message": e.message}, status=400)
                 else:
@@ -309,7 +310,7 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
                 if customer.user.check_password(password):
                     try:
                         validate_password(new_password, user=customer.user)
-                        customer.user.password = new_password
+                        user.password = new_password
                     except ValidationError as e:
                         return Response({"message": e.message}, status=400)
                 else:
@@ -325,7 +326,7 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
                         status=409,
                     )
                 else:
-                    customer.user.username = new_username
+                    user.username = new_username
             if new_phone:
                 customer.phone = new_phone
             if new_country:
@@ -345,6 +346,7 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
 
             # Save the updated customer object
             customer.save()
+            user.save()
 
             return Response({"message": "Updated successfully"}, status=200)
         except:
