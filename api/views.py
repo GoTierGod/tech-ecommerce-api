@@ -290,6 +290,13 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
             if new_email:
                 if customer.user.check_password(password):
                     try:
+                        if models.User.objects.filter(email=new_email).exists():
+                            return Response(
+                                {
+                                    "message": f'The email "{new_email}" is already being used'
+                                },
+                                status=409,
+                            )
                         validate_email(new_email)
                         customer.user.email = new_email
                     except ValidationError as e:
@@ -310,7 +317,15 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
 
             # Update other customer information without requiring password
             if new_username:
-                customer.user.username = new_username
+                if models.User.objects.filter(username=new_username).exists():
+                    return Response(
+                        {
+                            "message": f'User with username "{new_username}" already exists'
+                        },
+                        status=409,
+                    )
+                else:
+                    customer.user.username = new_username
             if new_phone:
                 customer.phone = new_phone
             if new_country:
@@ -344,12 +359,19 @@ class CreateCustomerViewSet(viewsets.ViewSet):
         birthdate = request.data["birthdate"]
 
         try:
+            # Validate username
             if models.User.objects.filter(username=username).exists():
                 return Response(
                     {"message": f'User with username "{username}" already exists'},
-                    status=400,
+                    status=409,
                 )
+            # Validate email
             validate_email(email)
+            if models.User.objects.filter(email=email).exists():
+                return Response(
+                    {"message": f'The email "{email}" is already being used'},
+                    status=409,
+                )
             validate_password(password)
             # Validate the age (minimum 18 years old)
             birthdate_date = datetime.strptime(birthdate, "%Y-%m-%d").date()
