@@ -408,3 +408,31 @@ class CreateCustomerViewSet(viewsets.ViewSet):
             - ((today.month, today.day) < (birthdate.month, birthdate.day))
         )
         return age
+
+
+class DeleteCustomerViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        try:
+            username = request.user.username
+            customer = models.Customer.objects.get(user__username=username)
+            user = models.User.objects.get(username=username)
+
+            password = request.data["password"]
+
+            if customer.user.check_password(password):
+                try:
+                    validate_password(password, user=customer.user)
+                except ValidationError as e:
+                    return Response({"message": e.message}, status=401)
+            else:
+                return Response({"message": "Incorrect password"}, status=401)
+
+            customer.delete()
+            user.delete()
+
+            return Response({"message": "Customer deleted"}, status=200)
+
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
