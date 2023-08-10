@@ -226,6 +226,7 @@ class SearchProductViewSet(viewsets.ViewSet):
         serialized_brands = serializers.BrandSerializer(brands, many=True)
 
         queryset = helpers.product_filters(queryset, request)
+        results = len(queryset)
 
         order_by_field = request.query_params.get("order_by")
         if order_by_field:
@@ -241,6 +242,7 @@ class SearchProductViewSet(viewsets.ViewSet):
 
         return Response(
             {
+                "results": results,
                 "pages": paginator.num_pages,
                 "products": serialized_products_data,
                 "categories": serialized_categories.data,
