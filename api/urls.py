@@ -34,4 +34,6 @@ urlpatterns = [
     path("customer/delete/", views.DeleteCustomerViewSet.as_view({"post": "delete"})),
     # cart
     path("cart/", views.CardItemViewSet.as_view({"get": "list"})),
+    # favorites
+    path("favorites/", views.FavItemViewSet.as_view({"get": "list"})),
 ]

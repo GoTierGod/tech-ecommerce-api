@@ -1,6 +1,4 @@
 from django.db.models import Avg
-from django.core.exceptions import ObjectDoesNotExist
-from rest_framework.response import Response
 
 from . import serializers
 from . import models
@@ -10,7 +8,7 @@ from distutils.util import strtobool
 
 def compose_product_info(product):
     return {
-        "details": serializers.ProductSerializer(product).data,
+        "product": serializers.ProductSerializer(product).data,
         "images": serializers.ProductImageSerializer(
             models.ProductImage.objects.filter(product_id=product.id).order_by("id"),
             many=True,

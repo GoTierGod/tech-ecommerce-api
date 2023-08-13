@@ -439,3 +439,17 @@ class CardItemViewSet(viewsets.ViewSet):
         ]
 
         return Response(serialized_products_data, status=200)
+
+
+class FavItemViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        user = request.user
+
+        fav_items = models.FavItem.objects.filter(customer__user=user)
+        serialized_products_data = [
+            helpers.compose_product_info(fav_item.product) for fav_item in fav_items
+        ]
+
+        return Response(serialized_products_data, status=200)

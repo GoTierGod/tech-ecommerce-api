@@ -88,3 +88,12 @@ class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CartItem
         fields = "__all__"
+
+
+class FavItemSerializer(serializers.ModelSerializer):
+    product = ProductSerializer()
+    customer = serializers.StringRelatedField()
+
+    class Meta:
+        model = models.FavItem
+        fields = "__all__"
