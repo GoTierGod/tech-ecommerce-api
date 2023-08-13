@@ -2,7 +2,7 @@ from django.urls import path, re_path
 from . import views
 
 urlpatterns = [
-    path("", views.welcome),
+    path("", views.routes),
     # products
     path("products/", views.ProductViewSet.as_view({"get": "list"})),
     # specific product details

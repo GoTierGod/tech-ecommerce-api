@@ -8,7 +8,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 @permission_classes([IsAuthenticated])
 @api_view(["GET"])
-def get_routers(request):
+def routes(request):
     routes = ["/api/", "/api/token/", "/api/token/refresh/", "/api/token/blacklist/"]
 
     return Response(routes, status=200)

@@ -11,18 +11,15 @@ from . import helpers
 from distutils.util import strtobool
 from datetime import datetime
 
-# PASSWORD VALIDATION
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
-# EMAIL VALIDATION
 from django.core.validators import validate_email
 
 
-# ENDPOINTS
 @permission_classes([IsAuthenticated])
 @api_view(["GET"])
-def welcome(request):
+def routes(request):
     routes = [
         "/api/products/",
         "/api/products/<int:id>",
@@ -37,13 +34,13 @@ def welcome(request):
         "/api/customer/",
         "/api/customer/update/",
         "/api/customer/create/",
+        "/api/customer/delete/",
     ]
 
     return Response(routes, status=200)
 
 
 class ProductViewSet(viewsets.ViewSet):
-    # return a less detailed information of a list of products
     def list(self, request):
         page = request.query_params.get("page")
         if page:
@@ -65,7 +62,6 @@ class ProductViewSet(viewsets.ViewSet):
 
         return Response(serialized_products_data, status=200)
 
-    # return a more detailed information about the product with this id
     def retrieve(self, request, id):
         try:
             product = models.Product.objects.get(id=id)
@@ -81,7 +77,6 @@ class ProductViewSet(viewsets.ViewSet):
 
 
 class ImageViewSet(viewsets.ViewSet):
-    # return all images of the product with this id
     def list(self, request, id):
         try:
             models.Product.objects.get(id=id)
@@ -101,7 +96,6 @@ class ImageViewSet(viewsets.ViewSet):
 
 
 class ReviewViewSet(viewsets.ViewSet):
-    # return all reviews of the product with this id
     def list(self, request, id):
         try:
             models.Product.objects.get(id=id)
@@ -117,7 +111,6 @@ class ReviewViewSet(viewsets.ViewSet):
 
 
 class OrderViewSet(viewsets.ViewSet):
-    # return all orders of the product with this id
     def list(self, request, id):
         try:
             models.Product.objects.get(id=id)
@@ -162,7 +155,6 @@ class OffersViewSet(viewsets.ViewSet):
                     {"message": f'Category "{category}" does not exists'}, status=404
                 )
 
-        # sort products by amount discounted in descending order
         queryset = queryset.extra(select={"discount": "price - offer_price"}).order_by(
             "discount"
         )[: int(limit) if limit else 10]
@@ -184,14 +176,12 @@ class BestSellersViewSet(viewsets.ViewSet):
                     {"message": f'Category "{category}" does not exists'}, status=404
                 )
 
-        # top 25 best seller products grouping orders by product ID
         best_sellers = models.Order.objects.values("product").annotate(
             order_count=Count("id")
         )[:25]
-        # products presents in the top 25, above
+
         bs_products = [item["product"] for item in best_sellers]
 
-        # leave only best seller products in our queryset
         queryset = queryset.filter(id__in=bs_products)
 
         serialized_products_data = [helpers.make_card_product(x) for x in queryset]
@@ -289,7 +279,6 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
             new_birthdate = request.data.get("birthdate")
             new_gender = request.data.get("gender")
 
-            # Update email if the given password is correct and the email is in a valid format
             if new_email:
                 if customer.user.check_password(password):
                     try:
@@ -307,7 +296,6 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
                 else:
                     return Response({"message": "Incorrect password"}, status=401)
 
-            # Update password if the given password is correct and the new password is in a valid format
             if new_password:
                 if customer.user.check_password(password):
                     try:
@@ -318,7 +306,6 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
                 else:
                     return Response({"message": "Incorrect password"}, status=401)
 
-            # Update other customer information without requiring password
             if new_username:
                 if models.User.objects.filter(username=new_username).exists():
                     return Response(
@@ -346,7 +333,6 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
             if new_gender:
                 customer.gender = new_gender
 
-            # Save the updated customer object
             customer.save()
             user.save()
 
@@ -363,13 +349,11 @@ class CreateCustomerViewSet(viewsets.ViewSet):
         birthdate = request.data["birthdate"]
 
         try:
-            # Validate username
             if models.User.objects.filter(username=username).exists():
                 return Response(
                     {"message": f'User with username "{username}" already exists'},
                     status=409,
                 )
-            # Validate email
             validate_email(email)
             if models.User.objects.filter(email=email).exists():
                 return Response(
@@ -377,7 +361,6 @@ class CreateCustomerViewSet(viewsets.ViewSet):
                     status=409,
                 )
             validate_password(password)
-            # Validate the age (minimum 18 years old)
             birthdate_date = datetime.strptime(birthdate, "%Y-%m-%d").date()
             if self.calculate_age(birthdate_date) < 18:
                 return Response(
