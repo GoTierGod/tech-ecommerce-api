@@ -76,3 +76,15 @@ class Review(admin.ModelAdmin):
 class Order(admin.ModelAdmin):
     list_display = ("id", "product", "customer", "country", "city")
     list_display_links = ("product",)
+
+
+@admin.register(models.CartItem)
+class CardItem(admin.ModelAdmin):
+    list_display = ("id", "product", "customer")
+    list_display_links = ("product",)
+
+
+@admin.register(models.FavItem)
+class FavItem(admin.ModelAdmin):
+    list_display = ("id", "product", "customer")
+    list_display_links = ("product",)
