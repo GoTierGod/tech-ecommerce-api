@@ -79,3 +79,12 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Order
         fields = "__all__"
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    product = ProductSerializer()
+    customer = serializers.StringRelatedField()
+
+    class Meta:
+        model = models.CartItem
+        fields = "__all__"

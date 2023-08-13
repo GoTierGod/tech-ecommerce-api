@@ -8,17 +8,7 @@ from . import models
 from distutils.util import strtobool
 
 
-def make_card_product(product):
-    return {
-        "details": serializers.ProductSerializer(product).data,
-        "image": serializers.ProductImageSerializer(
-            models.ProductImage.objects.get(product_id=product.id, is_default=True)
-        ).data,
-        "sold": models.Order.objects.filter(product_id=product.id).count(),
-    }
-
-
-def make_detailed_product(product):
+def compose_product_info(product):
     return {
         "details": serializers.ProductSerializer(product).data,
         "images": serializers.ProductImageSerializer(

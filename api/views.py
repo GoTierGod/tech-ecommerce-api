@@ -58,7 +58,9 @@ class ProductViewSet(viewsets.ViewSet):
         if len(page_queryset) == 0:
             return Response({"message": "Not found"}, status=404)
 
-        serialized_products_data = [helpers.make_card_product(x) for x in page_queryset]
+        serialized_products_data = [
+            helpers.compose_product_info(x) for x in page_queryset
+        ]
 
         return Response(serialized_products_data, status=200)
 
@@ -71,7 +73,7 @@ class ProductViewSet(viewsets.ViewSet):
             )
 
         return Response(
-            helpers.make_detailed_product(product),
+            helpers.compose_product_info(product),
             status=200,
         )
 
@@ -159,7 +161,7 @@ class OffersViewSet(viewsets.ViewSet):
             "discount"
         )[: int(limit) if limit else 10]
 
-        serialized_products_data = [helpers.make_card_product(x) for x in queryset]
+        serialized_products_data = [helpers.compose_product_info(x) for x in queryset]
 
         return Response(serialized_products_data, status=200)
 
@@ -184,7 +186,7 @@ class BestSellersViewSet(viewsets.ViewSet):
 
         queryset = queryset.filter(id__in=bs_products)
 
-        serialized_products_data = [helpers.make_card_product(x) for x in queryset]
+        serialized_products_data = [helpers.compose_product_info(x) for x in queryset]
 
         return Response(serialized_products_data, status=200)
 
@@ -228,7 +230,9 @@ class SearchProductViewSet(viewsets.ViewSet):
         if len(page_queryset) == 0:
             return Response({"message": "Not found"}, status=404)
 
-        serialized_products_data = [helpers.make_card_product(x) for x in page_queryset]
+        serialized_products_data = [
+            helpers.compose_product_info(x) for x in page_queryset
+        ]
 
         return Response(
             {
@@ -421,3 +425,17 @@ class DeleteCustomerViewSet(viewsets.ViewSet):
 
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
+
+
+class CardItemViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        user = request.user
+
+        cart_items = models.CartItem.objects.filter(customer__user=user)
+        serialized_products_data = [
+            helpers.compose_product_info(cart_item.product) for cart_item in cart_items
+        ]
+
+        return Response(serialized_products_data, status=200)
