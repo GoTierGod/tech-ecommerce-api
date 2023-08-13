@@ -46,7 +46,7 @@ class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
-        return f"{self.user.first_name} {self.user.last_name}"
+        return f"{self.user.username} ({self.user.first_name} {self.user.last_name})"
 
 
 class DeliveryMan(models.Model):
@@ -64,7 +64,7 @@ class DeliveryMan(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
-        return f"{self.user.first_name} {self.user.last_name}"
+        return f"{self.user.username} ({self.user.first_name} {self.user.last_name})"
 
 
 class Product(models.Model):
