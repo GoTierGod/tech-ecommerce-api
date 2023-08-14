@@ -34,6 +34,22 @@ urlpatterns = [
     path("customer/delete/", views.DeleteCustomerViewSet.as_view({"post": "delete"})),
     # cart
     path("cart/", views.CardItemViewSet.as_view({"get": "list"})),
+    path(
+        "cart/create/<int:id>",
+        views.CardItemViewSet.as_view({"post": "create"}),
+    ),
+    path(
+        "cart/delete/<int:id>",
+        views.CardItemViewSet.as_view({"delete": "delete"}),
+    ),
     # favorites
     path("favorites/", views.FavItemViewSet.as_view({"get": "list"})),
+    path(
+        "favorites/create/<int:id>",
+        views.FavItemViewSet.as_view({"post": "create"}),
+    ),
+    path(
+        "favorites/delete/<int:id>",
+        views.FavItemViewSet.as_view({"delete": "delete"}),
+    ),
 ]
