@@ -38,6 +38,7 @@ urlpatterns = [
         "cart/delete/<int:id>",
         views.CardItemViewSet.as_view({"delete": "delete"}),
     ),
+    path("cart/move/<int:id>", views.CardItemViewSet.as_view({"patch": "update"})),
     # favorites
     path("favorites/", views.FavItemViewSet.as_view({"get": "list"})),
     path(
@@ -48,4 +49,5 @@ urlpatterns = [
         "favorites/delete/<int:id>",
         views.FavItemViewSet.as_view({"delete": "delete"}),
     ),
+    path("favorites/move/<int:id>", views.FavItemViewSet.as_view({"patch": "update"})),
 ]

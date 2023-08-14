@@ -448,6 +448,29 @@ class CardItemViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
+    def update(self, request, id):
+        try:
+            user = request.user
+
+            product = models.Product.objects.get(id=id)
+            customer = models.Customer.objects.get(user=user)
+
+            new_fav_item = models.FavItem.objects.create(
+                product=product, customer=customer
+            )
+
+            new_fav_item.save()
+
+            prev_cart_item = models.CartItem.objects.get(
+                product=product, customer=customer
+            )
+
+            prev_cart_item.delete()
+
+            return Response({"message": "The item was moved to cart"}, status=200)
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
+
 
 class FavItemViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
@@ -497,5 +520,28 @@ class FavItemViewSet(viewsets.ViewSet):
             return Response(
                 {"message": "The item was removed from your favorites"}, status=200
             )
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
+
+    def update(self, request, id):
+        try:
+            user = request.user
+
+            product = models.Product.objects.get(id=id)
+            customer = models.Customer.objects.get(user=user)
+
+            new_cart_item = models.CartItem.objects.create(
+                product=product, customer=customer
+            )
+
+            new_cart_item.save()
+
+            prev_fav_item = models.FavItem.objects.get(
+                product=product, customer=customer
+            )
+
+            prev_fav_item.delete()
+
+            return Response({"message": "The item was moved to cart"}, status=200)
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
