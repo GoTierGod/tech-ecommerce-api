@@ -78,55 +78,6 @@ class ProductViewSet(viewsets.ViewSet):
         )
 
 
-class ImageViewSet(viewsets.ViewSet):
-    def list(self, request, id):
-        try:
-            models.Product.objects.get(id=id)
-        except ObjectDoesNotExist:
-            return Response(
-                {"message": f'The product with id "{id}" does not exists'}, status=404
-            )
-
-        queryset = models.ProductImage.objects.all().filter(product_id=id)
-
-        is_default = request.query_params.get("is_default")
-        if is_default:
-            queryset = queryset.filter(is_default=strtobool(is_default))
-
-        serialized = serializers.ProductImageSerializer(queryset, many=True)
-        return Response(serialized.data, status=200)
-
-
-class ReviewViewSet(viewsets.ViewSet):
-    def list(self, request, id):
-        try:
-            models.Product.objects.get(id=id)
-        except ObjectDoesNotExist:
-            return Response(
-                {"message": f'The product with id "{id}" does not exists'}, status=404
-            )
-
-        queryset = models.Review.objects.all().filter(product_id=id)
-        serialized = serializers.ReviewSerializer(queryset, many=True)
-
-        return Response(serialized.data, status=200)
-
-
-class OrderViewSet(viewsets.ViewSet):
-    def list(self, request, id):
-        try:
-            models.Product.objects.get(id=id)
-        except ObjectDoesNotExist:
-            return Response(
-                {"message": f'The product with id "{id}" does not exists'}, status=404
-            )
-
-        queryset = models.Order.objects.filter(product_id=id).all()
-        serialized = serializers.OrderSerializer(queryset, many=True)
-
-        return Response(serialized.data, status=200)
-
-
 class BrandViewSet(viewsets.ViewSet):
     def list(self, request):
         queryset = models.Brand.objects.all()
@@ -259,9 +210,48 @@ class CustomerViewSet(viewsets.ViewSet):
         except ObjectDoesNotExist:
             return Response({"message": "Not found"}, status=404)
 
+    def create(self, request):
+        username = request.data["username"]
+        email = request.data["email"]
+        password = request.data["password"]
+        birthdate = request.data["birthdate"]
 
-class UpdateCustomerViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+        try:
+            if models.User.objects.filter(username=username).exists():
+                return Response(
+                    {"message": f'User with username "{username}" already exists'},
+                    status=409,
+                )
+            validate_email(email)
+            if models.User.objects.filter(email=email).exists():
+                return Response(
+                    {"message": f'The email "{email}" is already being used'},
+                    status=409,
+                )
+            validate_password(password)
+            birthdate_date = datetime.strptime(birthdate, "%Y-%m-%d").date()
+            if self.calculate_age(birthdate_date) < 18:
+                return Response(
+                    {"message": "You must be at least 18 years old to register"},
+                    status=400,
+                )
+        except ValidationError as e:
+            return Response({"message": e.message}, status=400)
+
+        try:
+            new_user = models.User.objects.create_user(
+                username=str(username), email=str(email), password=str(password)
+            )
+            new_customer = models.Customer.objects.create(
+                birthdate=birthdate, user=new_user
+            )
+
+            new_user.save()
+            new_customer.save()
+        except Exception:
+            return Response({"message": "Something went wrong"}, status=400)
+
+        return Response({"message": "Successfully created"}, status=201)
 
     def update(self, request):
         try:
@@ -344,64 +334,6 @@ class UpdateCustomerViewSet(viewsets.ViewSet):
         except:
             return Response({"message": "Something went wrong"}, status=400)
 
-
-class CreateCustomerViewSet(viewsets.ViewSet):
-    def create(self, request):
-        username = request.data["username"]
-        email = request.data["email"]
-        password = request.data["password"]
-        birthdate = request.data["birthdate"]
-
-        try:
-            if models.User.objects.filter(username=username).exists():
-                return Response(
-                    {"message": f'User with username "{username}" already exists'},
-                    status=409,
-                )
-            validate_email(email)
-            if models.User.objects.filter(email=email).exists():
-                return Response(
-                    {"message": f'The email "{email}" is already being used'},
-                    status=409,
-                )
-            validate_password(password)
-            birthdate_date = datetime.strptime(birthdate, "%Y-%m-%d").date()
-            if self.calculate_age(birthdate_date) < 18:
-                return Response(
-                    {"message": "You must be at least 18 years old to register"},
-                    status=400,
-                )
-        except ValidationError as e:
-            return Response({"message": e.message}, status=400)
-
-        try:
-            new_user = models.User.objects.create_user(
-                username=str(username), email=str(email), password=str(password)
-            )
-            new_customer = models.Customer.objects.create(
-                birthdate=birthdate, user=new_user
-            )
-
-            new_user.save()
-            new_customer.save()
-        except Exception:
-            return Response({"message": "Something went wrong"}, status=400)
-
-        return Response({"message": "Successfully created"}, status=201)
-
-    def calculate_age(self, birthdate):
-        today = datetime.now().date()
-        age = (
-            today.year
-            - birthdate.year
-            - ((today.month, today.day) < (birthdate.month, birthdate.day))
-        )
-        return age
-
-
-class DeleteCustomerViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
-
     def delete(self, request):
         try:
             username = request.user.username
@@ -425,6 +357,15 @@ class DeleteCustomerViewSet(viewsets.ViewSet):
 
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
+
+    def calculate_age(self, birthdate):
+        today = datetime.now().date()
+        age = (
+            today.year
+            - birthdate.year
+            - ((today.month, today.day) < (birthdate.month, birthdate.day))
+        )
+        return age
 
 
 class CardItemViewSet(viewsets.ViewSet):
