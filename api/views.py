@@ -98,7 +98,12 @@ class OffersViewSet(viewsets.ViewSet):
     def list(self, request, category=None):
         queryset = models.Product.objects.all()
 
-        limit = request.query_params.get("limit")
+        page = request.query_params.get("page")
+        if page:
+            try:
+                page = int(page)
+            except ValueError:
+                page = 1
 
         if category:
             try:
@@ -110,9 +115,13 @@ class OffersViewSet(viewsets.ViewSet):
 
         queryset = queryset.extra(select={"discount": "price - offer_price"}).order_by(
             "discount"
-        )[: int(limit) if limit else 10]
+        )
+        paginator = Paginator(queryset, 10)
+        page_queryset = paginator.get_page(page)
 
-        serialized_products_data = [helpers.compose_product_info(x) for x in queryset]
+        serialized_products_data = [
+            helpers.compose_product_info(x) for x in page_queryset
+        ]
 
         return Response(serialized_products_data, status=200)
 
@@ -120,6 +129,13 @@ class OffersViewSet(viewsets.ViewSet):
 class BestSellersViewSet(viewsets.ViewSet):
     def list(self, request, category=None):
         queryset = models.Product.objects.all()
+
+        page = request.query_params.get("page")
+        if page:
+            try:
+                page = int(page)
+            except ValueError:
+                page = 1
 
         if category:
             try:
@@ -136,8 +152,12 @@ class BestSellersViewSet(viewsets.ViewSet):
         bs_products = [item["product"] for item in best_sellers]
 
         queryset = queryset.filter(id__in=bs_products)
+        paginator = Paginator(queryset, 10)
+        page_queryset = paginator.get_page(page)
 
-        serialized_products_data = [helpers.compose_product_info(x) for x in queryset]
+        serialized_products_data = [
+            helpers.compose_product_info(x) for x in page_queryset
+        ]
 
         return Response(serialized_products_data, status=200)
 
