@@ -1,11 +1,22 @@
-from django.db.models import Avg
-from django.core.exceptions import ObjectDoesNotExist
-from rest_framework.response import Response
+from django.db.models import Avg, Count
 
 from . import serializers
 from . import models
 
 from distutils.util import strtobool
+
+
+def is_best_seller(product):
+    queryset = models.Product.objects.all()
+
+    best_sellers = models.Order.objects.values("product").annotate(
+        order_count=Count("id")
+    )[:25]
+
+    bs_products = [item["product"] for item in best_sellers]
+
+    queryset = queryset.filter(id__in=bs_products)
+    return True if queryset.filter(id=product.id) else False
 
 
 def compose_product_info(product):
@@ -19,6 +30,7 @@ def compose_product_info(product):
             many=True,
         ).data,
         "sold": models.Order.objects.filter(product_id=product.id).count(),
+        "best_seller": is_best_seller(product),
         "reviews_counter": models.Review.objects.filter(product_id=product.id).count(),
         "rating": models.Review.objects.filter(product_id=product.id).aggregate(
             Avg("rating")
