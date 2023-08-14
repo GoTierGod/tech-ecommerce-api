@@ -35,6 +35,12 @@ def routes(request):
         "/api/customer/update/",
         "/api/customer/create/",
         "/api/customer/delete/",
+        "/api/cart/",
+        "/api/cart/create/",
+        "/api/cart/delete/",
+        "/api/favorites/",
+        "/api/favorites/create/",
+        "/api/favorites/delete/",
     ]
 
     return Response(routes, status=200)
