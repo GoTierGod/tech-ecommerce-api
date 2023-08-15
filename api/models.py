@@ -181,9 +181,9 @@ class OrderItem(models.Model):
     quantity = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
     )
-    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL)
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True)
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
-    order = models.ForeignKey(Order, on_delete=models.SET_NULL)
+    order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True)
 
     def __str__(self) -> str:
         return f"{self.product.name} - {self.customer.user.username}"
