@@ -1,4 +1,4 @@
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Sum
 
 from . import serializers
 from . import models
@@ -9,9 +9,11 @@ from distutils.util import strtobool
 def is_best_seller(product):
     queryset = models.Product.objects.all()
 
-    best_sellers = models.OrderItem.objects.values("product").annotate(
-        order_count=Count("id")
-    )[:25]
+    best_sellers = (
+        models.OrderItem.objects.values("product")
+        .annotate(order_count=Count("id"), total_quantity=Sum("quantity"))
+        .order_by("-order_count")[:25]
+    )
 
     bs_products = [item["product"] for item in best_sellers]
 

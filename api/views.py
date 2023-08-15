@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from . import serializers
@@ -151,9 +151,11 @@ class BestSellersViewSet(viewsets.ViewSet):
                     {"message": f'Category "{category}" does not exists'}, status=404
                 )
 
-        best_sellers = models.Order.objects.values("product").annotate(
-            order_count=Count("id")
-        )[:25]
+        best_sellers = (
+            models.OrderItem.objects.values("product")
+            .annotate(order_count=Count("id"), total_quantity=Sum("quantity"))
+            .order_by("-order_count")[:25]
+        )
 
         bs_products = [item["product"] for item in best_sellers]
 
