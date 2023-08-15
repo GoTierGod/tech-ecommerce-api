@@ -72,12 +72,19 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    customer = serializers.StringRelatedField()
-    product = serializers.StringRelatedField()
     delivery_man = serializers.StringRelatedField()
 
     class Meta:
         model = models.Order
+        fields = "__all__"
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    customer = serializers.StringRelatedField()
+    product = ProductSerializer()
+
+    class Meta:
+        model = models.OrderItem
         fields = "__all__"
 
 

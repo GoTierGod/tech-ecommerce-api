@@ -69,3 +69,10 @@ def product_filters(queryset, request):
             pass
 
     return queryset
+
+
+def compose_purchase(order_item):
+    return {
+        "order": serializers.OrderSerializer(order_item.order).data,
+        "order_item": serializers.OrderItemSerializer(order_item).data,
+    }

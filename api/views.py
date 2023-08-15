@@ -587,3 +587,18 @@ class PurchaseViewSet(viewsets.ViewSet):
         except Exception as e:
             print(e)
             return Response({"message": "Something went wrong"}, status=400)
+
+    def list(self, request):
+        user = request.user
+
+        customer = models.Customer.objects.get(user=user)
+        order_items = models.OrderItem.objects.filter(customer=customer)
+
+        if len(order_items) == 0:
+            return Response([], status=200)
+
+        serialized_purchases_data = [
+            helpers.compose_purchase(order_item) for order_item in order_items
+        ]
+
+        return Response({"purchases": serialized_purchases_data}, status=200)
