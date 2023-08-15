@@ -157,17 +157,18 @@ class Review(models.Model):
 
 
 class Order(models.Model):
-    delivered = models.BooleanField(default=False)
     purchase_date = models.DateField(auto_now_add=True, editable=False)
     delivery_term = models.DateField()
-    notes = models.CharField(
-        max_length=255, default="", validators=[MinLengthValidator(0)]
-    )
+    delivering = models.BooleanField(default=False)
+    delivered = models.BooleanField(default=False)
     payment_method = models.CharField(max_length=45)
     country = models.CharField(max_length=45)
     city = models.CharField(max_length=45)
     address = models.CharField(max_length=1000)
     postal_code = models.CharField(max_length=255, default=None, null=True)
+    notes = models.CharField(
+        max_length=255, default="", validators=[MinLengthValidator(0)]
+    )
     delivery_man = models.ForeignKey(
         DeliveryMan, on_delete=models.SET_NULL, default=None, null=True
     )
