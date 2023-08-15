@@ -159,7 +159,8 @@ class Review(models.Model):
 class Order(models.Model):
     purchase_date = models.DateField(auto_now_add=True, editable=False)
     delivery_term = models.DateField()
-    delivering = models.BooleanField(default=False)
+    dispatched = models.BooleanField(default=False)
+    on_the_way = models.BooleanField(default=False)
     delivered = models.BooleanField(default=False)
     payment_method = models.CharField(max_length=45)
     country = models.CharField(max_length=45)
