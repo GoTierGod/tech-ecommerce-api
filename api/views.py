@@ -604,3 +604,24 @@ class PurchaseViewSet(viewsets.ViewSet):
         ]
 
         return Response({"purchases": serialized_purchases_data}, status=200)
+
+    def delete(self, request, id):
+        user = request.user
+        customer = models.Customer.objects.get(user=user)
+
+        order = models.Order.objects.get(id=id)
+        order_items = models.OrderItem.objects.filter(order=order, customer=customer)
+
+        if len(order_items) == 0:
+            return Response("Something went wrong", status=400)
+
+        if order.dispatched:
+            return Response(
+                {"message": "Once dispatched, orders cannot be cancelled"},
+                401,
+            )
+
+        order.delete()
+        order_items.delete()
+
+        return Response({"message": "Order was canceled"}, status=200)

@@ -52,6 +52,8 @@ urlpatterns = [
     path("favorites/move/<int:id>", views.FavItemViewSet.as_view({"patch": "update"})),
     # purchase
     path("purchase/", views.PurchaseViewSet.as_view({"post": "create"})),
-    # orders
     path("purchase/history/", views.PurchaseViewSet.as_view({"get": "list"})),
+    path(
+        "purchase/delete/<int:id>", views.PurchaseViewSet.as_view({"delete": "delete"})
+    ),
 ]
