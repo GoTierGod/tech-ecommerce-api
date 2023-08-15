@@ -169,7 +169,7 @@ class Order(models.Model):
     address = models.CharField(max_length=1000)
     postal_code = models.CharField(max_length=255, default=None, null=True)
     delivery_man = models.ForeignKey(
-        DeliveryMan, on_delete=models.PROTECT, default=None, null=True
+        DeliveryMan, on_delete=models.SET_NULL, default=None, null=True
     )
 
     def __str__(self) -> str:
@@ -181,21 +181,9 @@ class OrderItem(models.Model):
     quantity = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
     )
-    customer = models.ForeignKey(Customer, on_delete=models.PROTECT)
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL)
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
-    order = models.ForeignKey(Order, on_delete=models.PROTECT)
-    # delivered = models.BooleanField()
-    # purchase_date = models.DateField(auto_now_add=True, editable=False)
-    # delivery_term = models.DateField()
-    # notes = models.CharField(
-    #     max_length=255, default="", validators=[MinLengthValidator(0)]
-    # )
-    # payment_method = models.CharField(max_length=45)
-    # country = models.CharField(max_length=45)
-    # city = models.CharField(max_length=45)
-    # address = models.CharField(max_length=1000)
-    # postal_code = models.CharField(max_length=255)
-    # delivery_man = models.ForeignKey(DeliveryMan, on_delete=models.PROTECT)
+    order = models.ForeignKey(Order, on_delete=models.SET_NULL)
 
     def __str__(self) -> str:
         return f"{self.product.name} - {self.customer.user.username}"
