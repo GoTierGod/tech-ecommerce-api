@@ -9,7 +9,7 @@ from distutils.util import strtobool
 def is_best_seller(product):
     queryset = models.Product.objects.all()
 
-    best_sellers = models.Order.objects.values("product").annotate(
+    best_sellers = models.OrderItem.objects.values("product").annotate(
         order_count=Count("id")
     )[:25]
 
@@ -29,7 +29,12 @@ def compose_product_info(product):
             models.ProductImage.objects.filter(product_id=product.id).order_by("id"),
             many=True,
         ).data,
-        "sold": models.Order.objects.filter(product_id=product.id).count(),
+        "sold": sum(
+            [
+                item.quantity
+                for item in models.OrderItem.objects.filter(product_id=product.id)
+            ]
+        ),
         "best_seller": is_best_seller(product),
         "reviews_counter": models.Review.objects.filter(product_id=product.id).count(),
         "rating": models.Review.objects.filter(product_id=product.id).aggregate(
