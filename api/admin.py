@@ -74,7 +74,13 @@ class Review(admin.ModelAdmin):
 
 @admin.register(models.Order)
 class Order(admin.ModelAdmin):
-    list_display = ("id", "product", "customer", "country", "city")
+    list_display = ("id", "delivered", "delivery_man")
+    list_display_links = ("delivered",)
+
+
+@admin.register(models.OrderItem)
+class OrderItem(admin.ModelAdmin):
+    list_display = ("id", "product", "customer")
     list_display_links = ("product",)
 
 

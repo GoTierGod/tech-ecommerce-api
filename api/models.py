@@ -157,10 +157,6 @@ class Review(models.Model):
 
 
 class Order(models.Model):
-    total_cost = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
-    quantity = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(10)],
-    )
     delivered = models.BooleanField()
     purchase_date = models.DateField(auto_now_add=True, editable=False)
     delivery_term = models.DateField()
@@ -172,12 +168,35 @@ class Order(models.Model):
     city = models.CharField(max_length=45)
     address = models.CharField(max_length=1000)
     postal_code = models.CharField(max_length=255)
-    customer = models.ForeignKey(Customer, on_delete=models.PROTECT)
-    product = models.ForeignKey(Product, on_delete=models.PROTECT)
-    delivery_man = models.ForeignKey(DeliveryMan, on_delete=models.PROTECT)
+    delivery_man = models.ForeignKey(DeliveryMan, on_delete=models.PROTECT, null=True)
 
     def __str__(self) -> str:
-        return f"{self.product.name} - {self.country}, {self.city}"
+        return f"{self.pk} - {self.delivered} - {self.delivery_man}"
+
+
+class OrderItem(models.Model):
+    total_cost = models.DecimalField(max_digits=7, decimal_places=2, editable=False)
+    quantity = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+    )
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT)
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    order = models.ForeignKey(Order, on_delete=models.PROTECT)
+    # delivered = models.BooleanField()
+    # purchase_date = models.DateField(auto_now_add=True, editable=False)
+    # delivery_term = models.DateField()
+    # notes = models.CharField(
+    #     max_length=255, default="", validators=[MinLengthValidator(0)]
+    # )
+    # payment_method = models.CharField(max_length=45)
+    # country = models.CharField(max_length=45)
+    # city = models.CharField(max_length=45)
+    # address = models.CharField(max_length=1000)
+    # postal_code = models.CharField(max_length=255)
+    # delivery_man = models.ForeignKey(DeliveryMan, on_delete=models.PROTECT)
+
+    def __str__(self) -> str:
+        return f"{self.product.name} - {self.customer.user.username}"
 
     def save(self, *args, **kwargs):
         self.total_cost = self.product.offer_price * self.quantity
