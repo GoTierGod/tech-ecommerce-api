@@ -605,23 +605,69 @@ class PurchaseViewSet(viewsets.ViewSet):
 
         return Response({"purchases": serialized_purchases_data}, status=200)
 
+    def update(self, request, id):
+        try:
+            user = request.user
+            customer = models.Customer.objects.get(user=user)
+
+            order = models.Order.objects.get(id=id)
+            order_items = models.OrderItem.objects.filter(
+                order=order, customer=customer
+            )
+            if len(order_items):
+                return Response({"message": "Something went wrong"}, status=400)
+
+            if order.on_the_way:
+                return Response(
+                    {"message": "Order on the way, information cannot be modified"},
+                    status=401,
+                )
+
+            country = request.data.get("country")
+            city = request.data.get("city")
+            address = request.data.get("address")
+            notes = request.data.get("notes")
+            postal_code = request.data.get("postal_code")
+
+            if country:
+                order.country = country
+            if city:
+                order.city = city
+            if address:
+                order.address = address
+            if notes:
+                order.notes = notes
+            if postal_code:
+                order.postal_code = postal_code
+
+            order.save()
+
+            return Response({"message": "Order updated"}, status=200)
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
+
     def delete(self, request, id):
-        user = request.user
-        customer = models.Customer.objects.get(user=user)
+        try:
+            user = request.user
+            customer = models.Customer.objects.get(user=user)
 
-        order = models.Order.objects.get(id=id)
-        order_items = models.OrderItem.objects.filter(order=order, customer=customer)
-
-        if len(order_items) == 0:
-            return Response("Something went wrong", status=400)
-
-        if order.dispatched:
-            return Response(
-                {"message": "Once dispatched, orders cannot be cancelled"},
-                401,
+            order = models.Order.objects.get(id=id)
+            order_items = models.OrderItem.objects.filter(
+                order=order, customer=customer
             )
 
-        order.delete()
-        order_items.delete()
+            if len(order_items) == 0:
+                return Response("Something went wrong", status=400)
 
-        return Response({"message": "Order was canceled"}, status=200)
+            if order.dispatched:
+                return Response(
+                    {"message": "Once dispatched, orders cannot be cancelled"},
+                    401,
+                )
+
+            order.delete()
+            order_items.delete()
+
+            return Response({"message": "Order was canceled"}, status=200)
+        except Exception as e:
+            return Response("Something went wrong", status=400)
