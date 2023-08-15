@@ -157,7 +157,7 @@ class Review(models.Model):
 
 
 class Order(models.Model):
-    delivered = models.BooleanField()
+    delivered = models.BooleanField(default=False)
     purchase_date = models.DateField(auto_now_add=True, editable=False)
     delivery_term = models.DateField()
     notes = models.CharField(
@@ -167,8 +167,10 @@ class Order(models.Model):
     country = models.CharField(max_length=45)
     city = models.CharField(max_length=45)
     address = models.CharField(max_length=1000)
-    postal_code = models.CharField(max_length=255)
-    delivery_man = models.ForeignKey(DeliveryMan, on_delete=models.PROTECT, null=True)
+    postal_code = models.CharField(max_length=255, default=None, null=True)
+    delivery_man = models.ForeignKey(
+        DeliveryMan, on_delete=models.PROTECT, default=None, null=True
+    )
 
     def __str__(self) -> str:
         return f"{self.pk} - {self.delivered} - {self.delivery_man}"

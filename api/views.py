@@ -545,3 +545,45 @@ class FavItemViewSet(viewsets.ViewSet):
             return Response({"message": "The item was moved to cart"}, status=200)
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
+
+
+class PurchaseViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request):
+        try:
+            user = request.user
+
+            products = request.data["products"]
+            payment_method = request.data["payment_method"]
+            delivery_term = request.data["delivery_term"]
+            country = request.data["country"]
+            city = request.data["city"]
+            address = request.data["address"]
+            notes = request.data["notes"]
+
+            order = models.Order.objects.create(
+                payment_method=payment_method,
+                delivery_term=delivery_term,
+                country=country,
+                city=city,
+                address=address,
+                notes=notes,
+            )
+
+            order.save()
+
+            [
+                models.OrderItem.objects.create(
+                    quantity=product["quantity"],
+                    customer=models.Customer.objects.get(user=user),
+                    product=models.Product.objects.get(id=product["id"]),
+                    order=order,
+                ).save()
+                for product in products
+            ]
+
+            return Response({"message": "Order was created successfully"}, status=200)
+        except Exception as e:
+            print(e)
+            return Response({"message": "Something went wrong"}, status=400)
