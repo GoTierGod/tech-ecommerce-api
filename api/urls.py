@@ -59,4 +59,5 @@ urlpatterns = [
     path(
         "purchase/delete/<int:id>", views.PurchaseViewSet.as_view({"delete": "delete"})
     ),
+    # reviews
 ]
