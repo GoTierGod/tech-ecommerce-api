@@ -60,4 +60,7 @@ urlpatterns = [
         "purchase/delete/<int:id>", views.PurchaseViewSet.as_view({"delete": "delete"})
     ),
     # reviews
+    path("reviews/<int:id>", views.ReviewViewSet.as_view({"get": "list"})),
+    path("reviews/create/<int:id>", views.ReviewViewSet.as_view({"post": "create"})),
+    path("reviews/delete/<int:id>", views.ReviewViewSet.as_view({"delete": "delete"})),
 ]

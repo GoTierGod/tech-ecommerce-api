@@ -603,7 +603,7 @@ class PurchaseViewSet(viewsets.ViewSet):
             helpers.compose_purchase(order_item) for order_item in order_items
         ]
 
-        return Response({"purchases": serialized_purchases_data}, status=200)
+        return Response(serialized_purchases_data, status=200)
 
     def update(self, request, id):
         try:
@@ -671,3 +671,53 @@ class PurchaseViewSet(viewsets.ViewSet):
             return Response({"message": "Order was canceled"}, status=200)
         except Exception as e:
             return Response("Something went wrong", status=400)
+
+
+class ReviewViewSet(viewsets.ViewSet):
+    def list(self, request, id):
+        try:
+            product = models.Product.objects.get(id=id)
+            reviews = models.Review.objects.filter(product=product)
+
+            serialized_reviews = serializers.ReviewSerializer(reviews, many=True)
+
+            return Response(serialized_reviews.data, status=200)
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
+
+    def create(self, request, id):
+        try:
+            user = request.user
+            customer = models.Customer.objects.get(user=user)
+            product = models.Product.objects.get(id=id)
+
+            rating = request.data["rating"]
+            title = request.data["title"]
+            content = request.data["content"]
+
+            new_review = models.Review.objects.create(
+                customer=customer,
+                product=product,
+                rating=rating,
+                title=title,
+                content=content,
+            )
+
+            new_review.save()
+
+            return Response({"message": "Review created successfully"}, status=200)
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
+
+    def delete(self, request, id):
+        try:
+            user = request.user
+            customer = models.Customer.objects.get(user=user)
+            product = models.Product.objects.get(id=id)
+
+            review = models.Review.objects.get(customer=customer, product=product)
+
+            review.delete()
+            return Response({"message": "Review deleted successfully"}, status=200)
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)

@@ -133,9 +133,13 @@ class Review(models.Model):
         max_length=500, default="", validators=[MinLengthValidator(0)]
     )
     date = models.DateField(auto_now_add=True, editable=False)
-    likes = models.PositiveSmallIntegerField(validators=[MaxValueValidator(10000)])
-    dislikes = models.PositiveSmallIntegerField(validators=[MaxValueValidator(10000)])
-    is_useful = models.BooleanField()
+    likes = models.PositiveSmallIntegerField(
+        validators=[MaxValueValidator(10000)], default=0
+    )
+    dislikes = models.PositiveSmallIntegerField(
+        validators=[MaxValueValidator(10000)], default=0
+    )
+    is_useful = models.BooleanField(default=False)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
