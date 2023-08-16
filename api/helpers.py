@@ -82,4 +82,5 @@ def compose_purchase(order_item):
     return {
         "order": serializers.OrderSerializer(order_item.order).data,
         "order_item": serializers.OrderItemSerializer(order_item).data,
+        "is_reviewed": models.Review.objects.filter(id=order_item.product.id).exists(),
     }
