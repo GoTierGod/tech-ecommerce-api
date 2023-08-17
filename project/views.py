@@ -12,18 +12,3 @@ def routes(request):
     routes = ["api/", "api/token/", "api/token/refresh/", "api/token/blacklist/"]
 
     return Response(routes, status=200)
-
-
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-
-        # Add custom claims
-        token["username"] = user.username
-
-        return token
-
-
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
