@@ -402,6 +402,7 @@ class CardItemViewSet(viewsets.ViewSet):
             new_cart_item.save()
 
             return Response({"message": "The item was added to your cart"}, status=200)
+
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
@@ -421,6 +422,7 @@ class CardItemViewSet(viewsets.ViewSet):
             return Response(
                 {"message": "The item was removed from your cart"}, status=200
             )
+
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
@@ -444,6 +446,7 @@ class CardItemViewSet(viewsets.ViewSet):
             prev_cart_item.delete()
 
             return Response({"message": "The item was moved to cart"}, status=200)
+
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
@@ -477,6 +480,7 @@ class FavItemViewSet(viewsets.ViewSet):
             return Response(
                 {"message": "The item was added to your favorites"}, status=200
             )
+
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
@@ -496,6 +500,7 @@ class FavItemViewSet(viewsets.ViewSet):
             return Response(
                 {"message": "The item was removed from your favorites"}, status=200
             )
+
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
@@ -519,6 +524,7 @@ class FavItemViewSet(viewsets.ViewSet):
             prev_fav_item.delete()
 
             return Response({"message": "The item was moved to cart"}, status=200)
+
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
@@ -560,24 +566,28 @@ class PurchaseViewSet(viewsets.ViewSet):
             ]
 
             return Response({"message": "Order was created successfully"}, status=200)
+
         except Exception as e:
-            print(e)
             return Response({"message": "Something went wrong"}, status=400)
 
     def list(self, request):
-        user = request.user
+        try:
+            user = request.user
 
-        customer = models.Customer.objects.get(user=user)
-        order_items = models.OrderItem.objects.filter(customer=customer)
+            customer = models.Customer.objects.get(user=user)
+            order_items = models.OrderItem.objects.filter(customer=customer)
 
-        if len(order_items) == 0:
-            return Response([], status=200)
+            if not order_items.exists():
+                return Response([], status=200)
 
-        serialized_purchases_data = [
-            helpers.compose_purchase(order_item) for order_item in order_items
-        ]
+            serialized_purchases_data = [
+                helpers.compose_purchase(order_item) for order_item in order_items
+            ]
 
-        return Response(serialized_purchases_data, status=200)
+            return Response(serialized_purchases_data, status=200)
+
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
 
     def update(self, request, id):
         try:
@@ -588,13 +598,13 @@ class PurchaseViewSet(viewsets.ViewSet):
             order_items = models.OrderItem.objects.filter(
                 order=order, customer=customer
             )
-            if len(order_items):
+            if not order_items.exists():
                 return Response({"message": "Something went wrong"}, status=400)
 
             if order.on_the_way:
                 return Response(
                     {"message": "Order on the way, information cannot be modified"},
-                    status=401,
+                    status=403,
                 )
 
             country = request.data.get("country")
@@ -617,6 +627,7 @@ class PurchaseViewSet(viewsets.ViewSet):
             order.save()
 
             return Response({"message": "Order updated"}, status=200)
+
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
@@ -630,19 +641,20 @@ class PurchaseViewSet(viewsets.ViewSet):
                 order=order, customer=customer
             )
 
-            if len(order_items) == 0:
+            if not order_items.exists():
                 return Response("Something went wrong", status=400)
 
             if order.dispatched:
                 return Response(
                     {"message": "Once dispatched, orders cannot be cancelled"},
-                    401,
+                    403,
                 )
 
             order.delete()
             order_items.delete()
 
             return Response({"message": "Order was canceled"}, status=200)
+
         except Exception as e:
             return Response("Something went wrong", status=400)
 
@@ -656,6 +668,7 @@ class ReviewViewSet(viewsets.ViewSet):
             serialized_reviews = serializers.ReviewSerializer(reviews, many=True)
 
             return Response(serialized_reviews.data, status=200)
+
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
@@ -680,6 +693,7 @@ class ReviewViewSet(viewsets.ViewSet):
             new_review.save()
 
             return Response({"message": "Review created successfully"}, status=200)
+
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
@@ -705,6 +719,7 @@ class ReviewViewSet(viewsets.ViewSet):
             review.save()
 
             return Response({"message": "Review updated sucessfully"}, status=200)
+
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
@@ -718,5 +733,6 @@ class ReviewViewSet(viewsets.ViewSet):
 
             review.delete()
             return Response({"message": "Review deleted successfully"}, status=200)
+
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
