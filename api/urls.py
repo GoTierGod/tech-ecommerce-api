@@ -62,5 +62,6 @@ urlpatterns = [
     # reviews
     path("reviews/<int:id>", views.ReviewViewSet.as_view({"get": "list"})),
     path("reviews/create/<int:id>", views.ReviewViewSet.as_view({"post": "create"})),
+    path("reviews/update/<int:id>", views.ReviewViewSet.as_view({"patch": "update"})),
     path("reviews/delete/<int:id>", views.ReviewViewSet.as_view({"delete": "delete"})),
 ]

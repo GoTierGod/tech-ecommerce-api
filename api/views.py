@@ -41,6 +41,14 @@ def routes(request):
         "/api/favorites/",
         "/api/favorites/create/",
         "/api/favorites/delete/",
+        "/api/purchase/",
+        "/api/purchase/history/",
+        "/api/purchase/update/",
+        "/api/purchase/delete/",
+        "/api/reviews/<int:id>",
+        "/api/reviews/create/<int:id>",
+        "/api/reviews/update/<int:id>",
+        "/api/reviews/delete/<int:id>",
     ]
 
     return Response(routes, status=200)
@@ -706,6 +714,31 @@ class ReviewViewSet(viewsets.ViewSet):
             new_review.save()
 
             return Response({"message": "Review created successfully"}, status=200)
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
+
+    def update(self, request, id):
+        try:
+            user = request.user
+            customer = models.Customer.objects.get(user=user)
+            product = models.Product.objects.get(id=id)
+
+            review = models.Review.objects.get(customer=customer, product=product)
+
+            rating = request.data.ger("rating")
+            title = request.data.get("title")
+            content = request.data.get("content")
+
+            if rating:
+                review.rating = rating
+            if title:
+                review.title = title
+            if content:
+                review.content = content
+
+            review.save()
+
+            return Response({"message": "Review updated sucessfully"}, status=200)
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
