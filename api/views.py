@@ -25,8 +25,6 @@ def routes(request):
         "products/<int:id>",
         "brands/",
         "categories/",
-        "offers/",
-        "offers/<str:category>",
         "best-sellers/",
         "best-sellers/<str:category>",
         "search/<str:search>",
