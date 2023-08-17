@@ -107,40 +107,34 @@ class CategoryViewSet(viewsets.ViewSet):
 
 class BestSellersViewSet(viewsets.ViewSet):
     def list(self, request, category=None):
-        queryset = models.Product.objects.all()
+        try:
+            products = models.Product.objects.all()
 
-        page = request.query_params.get("page")
-        if page:
-            try:
-                page = int(page)
-            except ValueError:
-                page = 1
+            page = request.query_params.get("page")
+            page = int(page) if str(page).isnumeric() else 1
 
-        if category:
-            try:
-                queryset = queryset.filter(category__title__iexact=category)
-            except ObjectDoesNotExist:
-                return Response(
-                    {"message": f'Category "{category}" does not exists'}, status=404
-                )
+            if category:
+                products = products.filter(category__title__iexact=category)
 
-        best_sellers = (
-            models.OrderItem.objects.values("product")
-            .annotate(order_count=Count("id"), total_quantity=Sum("quantity"))
-            .order_by("-order_count")[:25]
-        )
+            best_sellers = (
+                models.OrderItem.objects.values("product")
+                .annotate(order_count=Count("id"), total_quantity=Sum("quantity"))
+                .order_by("-order_count")[:25]
+            )
 
-        bs_products = [item["product"] for item in best_sellers]
+            best_sellers_products = [item["product"] for item in best_sellers]
 
-        queryset = queryset.filter(id__in=bs_products)
-        paginator = Paginator(queryset, 10)
-        page_queryset = paginator.get_page(page)
+            products = products.filter(id__in=best_sellers_products)
+            paginator = Paginator(products, 10)
+            page_queryset = paginator.get_page(page)
 
-        serialized_products_data = [
-            helpers.compose_product_info(x) for x in page_queryset
-        ]
+            serialized_products_data = [
+                helpers.compose_product_info(x) for x in page_queryset
+            ]
 
-        return Response(serialized_products_data, status=200)
+            return Response(serialized_products_data, status=200)
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
 
 
 class SearchProductViewSet(viewsets.ViewSet):
