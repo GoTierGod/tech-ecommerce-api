@@ -7,7 +7,7 @@ from distutils.util import strtobool
 
 
 def is_best_seller(product):
-    queryset = models.Product.objects.all()
+    products = models.Product.objects.all()
 
     best_sellers = (
         models.OrderItem.objects.values("product")
@@ -17,8 +17,8 @@ def is_best_seller(product):
 
     bs_products = [item["product"] for item in best_sellers]
 
-    queryset = queryset.filter(id__in=bs_products)
-    return True if queryset.filter(id=product.id) else False
+    products = products.filter(id__in=bs_products)
+    return products.filter(id=product.id).exists()
 
 
 def compose_product_info(product):
@@ -28,7 +28,7 @@ def compose_product_info(product):
             models.ProductImage.objects.get(product_id=product.id, is_default=True)
         ).data,
         "images": serializers.ProductImageSerializer(
-            models.ProductImage.objects.filter(product_id=product.id).order_by("id"),
+            models.ProductImage.objects.filter(product_id=product.id),
             many=True,
         ).data,
         "sold": sum(
@@ -45,7 +45,7 @@ def compose_product_info(product):
     }
 
 
-def product_filters(queryset, request):
+def product_filters(products, request):
     category = request.query_params.get("category")
     brand = request.query_params.get("brand")
     is_gamer = request.query_params.get("is_gamer")
@@ -54,28 +54,28 @@ def product_filters(queryset, request):
     installments = request.query_params.get("installments")
 
     if category:
-        queryset = queryset.filter(category__title__iexact=category)
+        products = products.filter(category__title__iexact=category)
     if brand:
-        queryset = queryset.filter(brand__name__iexact=brand)
+        products = products.filter(brand__name__iexact=brand)
     if is_gamer:
-        queryset = queryset.filter(is_gamer=strtobool(is_gamer))
+        products = products.filter(is_gamer=strtobool(is_gamer))
     if min_price:
         try:
-            queryset = queryset.filter(offer_price__gte=float(min_price))
+            products = products.filter(offer_price__gte=float(min_price))
         except ValueError:
             pass
     if max_price:
         try:
-            queryset = queryset.filter(offer_price__lte=float(max_price))
+            products = products.filter(offer_price__lte=float(max_price))
         except ValueError:
             pass
     if installments:
         try:
-            queryset = queryset.filter(installments=int(installments))
+            products = products.filter(installments=int(installments))
         except ValueError:
             pass
 
-    return queryset
+    return products
 
 
 def compose_purchase(order_item):
