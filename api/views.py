@@ -91,18 +91,18 @@ class ProductViewSet(viewsets.ViewSet):
 
 class BrandViewSet(viewsets.ViewSet):
     def list(self, request):
-        queryset = models.Brand.objects.all()
-        serialized = serializers.BrandSerializer(queryset, many=True)
+        brands = models.Brand.objects.all()
+        serialized_brands = serializers.BrandSerializer(brands, many=True)
 
-        return Response(serialized.data, status=200)
+        return Response(serialized_brands.data, status=200)
 
 
 class CategoryViewSet(viewsets.ViewSet):
     def list(self, request):
-        queryset = models.Category.objects.all()
-        serialized = serializers.CategorySerializer(queryset, many=True)
+        categories = models.Category.objects.all()
+        serialized_categories = serializers.CategorySerializer(categories, many=True)
 
-        return Response(serialized.data, status=200)
+        return Response(serialized_categories.data, status=200)
 
 
 class OffersViewSet(viewsets.ViewSet):
