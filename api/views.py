@@ -139,57 +139,55 @@ class BestSellersViewSet(viewsets.ViewSet):
 
 class SearchProductViewSet(viewsets.ViewSet):
     def list(self, request, search):
-        page = request.query_params.get("page")
-        if page:
-            try:
-                page = int(page)
-            except ValueError:
-                page = 1
+        try:
+            page = request.query_params.get("page")
+            page = int(page) if str(page).isnumeric() else 1
 
-        search_terms = str(search).split(",")
+            search_terms = str(search).split(",")
 
-        query = Q()
-        for term in search_terms:
-            query |= Q(name__icontains=term)
-            query |= Q(category__title__icontains=term)
-            query |= Q(brand__name__icontains=term)
+            query = Q()
+            for term in search_terms:
+                query |= Q(name__icontains=term)
+                query |= Q(category__title__icontains=term)
+                query |= Q(brand__name__icontains=term)
 
-        queryset = models.Product.objects.all()
-        queryset = queryset.filter(query)
+            products = models.Product.objects.all()
+            products = products.filter(query)
 
-        categories = set(x.category for x in queryset)
-        serialized_categories = serializers.CategorySerializer(categories, many=True)
+            categories = set(p.category for p in products)
+            serialized_categories = serializers.CategorySerializer(
+                categories, many=True
+            )
 
-        brands = set(x.brand for x in queryset)
-        serialized_brands = serializers.BrandSerializer(brands, many=True)
+            brands = set(p.brand for p in products)
+            serialized_brands = serializers.BrandSerializer(brands, many=True)
 
-        queryset = helpers.product_filters(queryset, request)
-        results = len(queryset)
+            products = helpers.product_filters(products, request)
+            results = len(products)
 
-        order_by_field = request.query_params.get("order_by")
-        if order_by_field:
-            queryset = queryset.order_by(order_by_field)
+            order_by_field = request.query_params.get("order_by")
+            if order_by_field:
+                products = products.order_by(order_by_field)
 
-        paginator = Paginator(queryset, 10)
-        page_queryset = paginator.get_page(page)
+            paginator = Paginator(products, 10)
+            page_queryset = paginator.get_page(page)
 
-        if len(page_queryset) == 0:
-            return Response({"message": "Not found"}, status=404)
+            serialized_products_data = [
+                helpers.compose_product_info(x) for x in page_queryset
+            ]
 
-        serialized_products_data = [
-            helpers.compose_product_info(x) for x in page_queryset
-        ]
-
-        return Response(
-            {
-                "results": results,
-                "pages": paginator.num_pages,
-                "products": serialized_products_data,
-                "categories": serialized_categories.data,
-                "brands": serialized_brands.data,
-            },
-            status=200,
-        )
+            return Response(
+                {
+                    "results": results,
+                    "pages": paginator.num_pages,
+                    "products": serialized_products_data,
+                    "categories": serialized_categories.data,
+                    "brands": serialized_brands.data,
+                },
+                status=200,
+            )
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
 
 
 class CustomerViewSet(viewsets.ViewSet):
