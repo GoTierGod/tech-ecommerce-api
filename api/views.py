@@ -68,10 +68,11 @@ class ProductViewSet(viewsets.ViewSet):
             page_queryset = paginator.get_page(page)
 
             serialized_products_data = [
-                helpers.compose_product_info(x) for x in page_queryset
+                helpers.compose_product_info(p) for p in page_queryset
             ]
 
             return Response(serialized_products_data, status=200)
+
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
@@ -129,10 +130,11 @@ class BestSellersViewSet(viewsets.ViewSet):
             page_queryset = paginator.get_page(page)
 
             serialized_products_data = [
-                helpers.compose_product_info(x) for x in page_queryset
+                helpers.compose_product_info(p) for p in page_queryset
             ]
 
             return Response(serialized_products_data, status=200)
+
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
@@ -173,7 +175,7 @@ class SearchProductViewSet(viewsets.ViewSet):
             page_queryset = paginator.get_page(page)
 
             serialized_products_data = [
-                helpers.compose_product_info(x) for x in page_queryset
+                helpers.compose_product_info(p) for p in page_queryset
             ]
 
             return Response(
@@ -186,6 +188,7 @@ class SearchProductViewSet(viewsets.ViewSet):
                 },
                 status=200,
             )
+
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
@@ -199,46 +202,53 @@ class CustomerViewSet(viewsets.ViewSet):
         return [permission() for permission in permission_classes]
 
     def retrieve(self, request):
-        username = request.user.username
-
         try:
-            customer = models.Customer.objects.get(user__username=username)
+            user = request.user
+            customer = models.Customer.objects.get(user=user)
+
             serialized_customer = serializers.CustomerSerializer(customer)
+
             return Response(serialized_customer.data, status=200)
-        except ObjectDoesNotExist:
-            return Response({"message": "Not found"}, status=404)
+
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
 
     def create(self, request):
-        username = request.data["username"]
-        email = request.data["email"]
-        password = request.data["password"]
-        birthdate = request.data["birthdate"]
-
         try:
-            if models.User.objects.filter(username=username).exists():
-                return Response(
-                    {"message": f'User with username "{username}" already exists'},
-                    status=409,
-                )
-            validate_email(email)
-            if models.User.objects.filter(email=email).exists():
-                return Response(
-                    {"message": f'The email "{email}" is already being used'},
-                    status=409,
-                )
-            validate_password(password)
-            birthdate_date = datetime.strptime(birthdate, "%Y-%m-%d").date()
-            if self.calculate_age(birthdate_date) < 18:
-                return Response(
-                    {"message": "You must be at least 18 years old to register"},
-                    status=400,
-                )
-        except ValidationError as e:
-            return Response({"message": e.message}, status=400)
+            username = request.data["username"]
+            email = request.data["email"]
+            password = request.data["password"]
+            birthdate = request.data["birthdate"]
 
-        try:
+            try:
+                if models.User.objects.filter(username=username).exists():
+                    return Response(
+                        {
+                            "message": f'A user with username "{username}" already exists'
+                        },
+                        status=409,
+                    )
+
+                validate_email(email)
+                if models.User.objects.filter(email=email).exists():
+                    return Response(
+                        {"message": f'The email "{email}" is already being used'},
+                        status=409,
+                    )
+
+                validate_password(password)
+
+                birthdate_date = datetime.strptime(birthdate, "%Y-%m-%d").date()
+                if self.calculate_age(birthdate_date) < 18:
+                    return Response(
+                        {"message": "You must be at least 18 years old to register"},
+                        status=403,
+                    )
+            except ValidationError as e:
+                return Response({"message": e.message}, status=403)
+
             new_user = models.User.objects.create_user(
-                username=str(username), email=str(email), password=str(password)
+                username=username, email=email, password=password
             )
             new_customer = models.Customer.objects.create(
                 birthdate=birthdate, user=new_user
@@ -246,18 +256,19 @@ class CustomerViewSet(viewsets.ViewSet):
 
             new_user.save()
             new_customer.save()
-        except Exception:
-            return Response({"message": "Something went wrong"}, status=400)
 
-        return Response({"message": "Successfully created"}, status=201)
+            return Response(
+                {"message": "The customer was successfully created"}, status=201
+            )
+
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
 
     def update(self, request):
         try:
-            username = request.user.username
-            customer = models.Customer.objects.get(user__username=username)
-            user = models.User.objects.get(username=username)
+            user = request.user
+            customer = models.Customer.objects.get(user=user)
 
-            # Update customer data based on request data (if provided)
             new_username = request.data.get("username")
             new_email = request.data.get("email")
             password = request.data.get("password")
@@ -284,17 +295,17 @@ class CustomerViewSet(viewsets.ViewSet):
                         validate_email(new_email)
                         user.email = new_email
                     except ValidationError as e:
-                        return Response({"message": e.message}, status=400)
+                        return Response({"message": e.message}, status=403)
                 else:
                     return Response({"message": "Incorrect password"}, status=401)
 
             if new_password:
                 if customer.user.check_password(password):
                     try:
-                        validate_password(new_password, user=customer.user)
+                        validate_password(new_password)
                         user.password = new_password
                     except ValidationError as e:
-                        return Response({"message": e.message}, status=400)
+                        return Response({"message": e.message}, status=403)
                 else:
                     return Response({"message": "Incorrect password"}, status=401)
 
@@ -302,12 +313,13 @@ class CustomerViewSet(viewsets.ViewSet):
                 if models.User.objects.filter(username=new_username).exists():
                     return Response(
                         {
-                            "message": f'User with username "{new_username}" already exists'
+                            "message": f'A user with username "{new_username}" already exists'
                         },
                         status=409,
                     )
                 else:
                     user.username = new_username
+
             if new_phone:
                 customer.phone = new_phone
             if new_country:
@@ -328,30 +340,27 @@ class CustomerViewSet(viewsets.ViewSet):
             customer.save()
             user.save()
 
-            return Response({"message": "Updated successfully"}, status=200)
-        except:
+            return Response(
+                {"message": "The customer info was pdated successfully"}, status=200
+            )
+
+        except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
     def delete(self, request):
         try:
-            username = request.user.username
-            customer = models.Customer.objects.get(user__username=username)
-            user = models.User.objects.get(username=username)
+            user = request.user
+            customer = models.Customer.objects.get(user=user)
 
             password = request.data["password"]
 
-            if customer.user.check_password(password):
-                try:
-                    validate_password(password, user=customer.user)
-                except ValidationError as e:
-                    return Response({"message": e.message}, status=401)
-            else:
+            if not customer.user.check_password(password):
                 return Response({"message": "Incorrect password"}, status=401)
 
             customer.delete()
             user.delete()
 
-            return Response({"message": "Customer deleted"}, status=200)
+            return Response({"message": "The user was deleted"}, status=200)
 
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
