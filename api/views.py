@@ -17,7 +17,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
 
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsAdminUser])
 @api_view(["GET"])
 def routes(request):
     routes = [
