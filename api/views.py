@@ -57,34 +57,30 @@ def routes(request):
 
 class ProductViewSet(viewsets.ViewSet):
     def list(self, request):
-        page = request.query_params.get("page")
-        if page:
-            try:
-                page = int(page)
-            except ValueError:
-                page = 1
+        try:
+            page = request.query_params.get("page")
+            page = int(page) if str(page).isnumeric() else 1
 
-        queryset = models.Product.objects.all()
-        queryset = helpers.product_filters(queryset, request)
+            products = models.Product.objects.all()
+            filtered_products = helpers.product_filters(products, request)
 
-        paginator = Paginator(queryset, 10)
-        page_queryset = paginator.get_page(page)
+            paginator = Paginator(filtered_products, 10)
+            page_queryset = paginator.get_page(page)
 
-        if len(page_queryset) == 0:
-            return Response({"message": "Not found"}, status=404)
+            serialized_products_data = [
+                helpers.compose_product_info(x) for x in page_queryset
+            ]
 
-        serialized_products_data = [
-            helpers.compose_product_info(x) for x in page_queryset
-        ]
-
-        return Response(serialized_products_data, status=200)
+            return Response(serialized_products_data, status=200)
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
 
     def retrieve(self, request, id):
         try:
             product = models.Product.objects.get(id=id)
         except ObjectDoesNotExist:
             return Response(
-                {"message": f'The product with id "{id}" does not exists'}, status=404
+                {"message": f'The product with ID "{id}" was not found.'}, status=404
             )
 
         return Response(
