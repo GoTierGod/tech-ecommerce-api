@@ -105,38 +105,6 @@ class CategoryViewSet(viewsets.ViewSet):
         return Response(serialized_categories.data, status=200)
 
 
-class OffersViewSet(viewsets.ViewSet):
-    def list(self, request, category=None):
-        queryset = models.Product.objects.all()
-
-        page = request.query_params.get("page")
-        if page:
-            try:
-                page = int(page)
-            except ValueError:
-                page = 1
-
-        if category:
-            try:
-                queryset = queryset.filter(category__title__iexact=category)
-            except ObjectDoesNotExist:
-                return Response(
-                    {"message": f'Category "{category}" does not exists'}, status=404
-                )
-
-        queryset = queryset.extra(select={"discount": "price - offer_price"}).order_by(
-            "discount"
-        )
-        paginator = Paginator(queryset, 10)
-        page_queryset = paginator.get_page(page)
-
-        serialized_products_data = [
-            helpers.compose_product_info(x) for x in page_queryset
-        ]
-
-        return Response(serialized_products_data, status=200)
-
-
 class BestSellersViewSet(viewsets.ViewSet):
     def list(self, request, category=None):
         queryset = models.Product.objects.all()

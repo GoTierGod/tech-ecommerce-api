@@ -10,9 +10,6 @@ urlpatterns = [
     path("brands/", views.BrandViewSet.as_view({"get": "list"})),
     # categories
     path("categories/", views.CategoryViewSet.as_view({"get": "list"})),
-    # offers
-    path("offers/", views.OffersViewSet.as_view({"get": "list"})),
-    path("offers/<str:category>", views.OffersViewSet.as_view({"get": "list"})),
     # best sellers
     path("best-sellers/", views.BestSellersViewSet.as_view({"get": "list"})),
     path(
