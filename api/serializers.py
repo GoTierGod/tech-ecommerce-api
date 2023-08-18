@@ -82,6 +82,7 @@ class OrderSerializer(serializers.ModelSerializer):
 class OrderItemSerializer(serializers.ModelSerializer):
     customer = serializers.StringRelatedField()
     product = ProductSerializer()
+    order = serializers.StringRelatedField()
 
     class Meta:
         model = models.OrderItem
