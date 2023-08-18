@@ -163,18 +163,18 @@ REST_FRAMEWORK = {
     # "DEFAULT_PERMISSION_CLASSES": [
     #     "rest_framework.permissions.IsAuthenticated",
     # ]
-    "DEFAULT_THROTTLE_CLASSES": [
-        "api.throttles.AnonBurstRateThrottle",
-        "api.throttles.AnonSustainedRateThrottle",
-        "api.throttles.UserBurstRateThrottle",
-        "api.throttles.UserSustainedRateThrottle",
-    ],
-    "DEFAULT_THROTTLE_RATES": {
-        "anon-burst": "60/min",
-        "anon-sustained": "1000/day",
-        "user-burst": "120/day",
-        "user-sustained": "5000/day",
-    },
+    # "DEFAULT_THROTTLE_CLASSES": [
+    #     "api.throttles.AnonBurstRateThrottle",
+    #     "api.throttles.AnonSustainedRateThrottle",
+    #     "api.throttles.UserBurstRateThrottle",
+    #     "api.throttles.UserSustainedRateThrottle",
+    # ],
+    # "DEFAULT_THROTTLE_RATES": {
+    #     "anon-burst": "60/min",
+    #     "anon-sustained": "1000/day",
+    #     "user-burst": "120/day",
+    #     "user-sustained": "5000/day",
+    # },
 }
 
 SIMPLE_JWT = {
