@@ -1,5 +1,8 @@
-from django.urls import path, re_path
+from django.urls import path, re_path, register_converter
 from . import views
+from .converters import IntListConverter
+
+register_converter(IntListConverter, "intlist")
 
 urlpatterns = [
     path("", views.routes),
@@ -43,7 +46,7 @@ urlpatterns = [
         views.FavItemViewSet.as_view({"post": "create"}),
     ),
     path(
-        "favorites/delete/<int:id>",
+        "favorites/delete/<intlist:ids>",
         views.FavItemViewSet.as_view({"delete": "delete"}),
     ),
     path("favorites/move/<int:id>", views.FavItemViewSet.as_view({"patch": "update"})),

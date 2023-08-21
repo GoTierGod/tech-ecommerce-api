@@ -38,8 +38,8 @@ def routes(request):
         "cart/move/<int:id>",
         "favorites/",
         "favorites/create/<int:id>",
-        "favorites/delete/<int:id>",
         "favorites/move/<int:id>",
+        "favorites/delete/",
         "purchase/",
         "purchase/history/",
         "purchase/update/<int:id>",
@@ -482,18 +482,18 @@ class FavItemViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
-    def delete(self, request, id):
+    def delete(self, request, ids=None):
         try:
             user = request.user
 
-            product = models.Product.objects.get(id=id)
+            products = models.Product.objects.filter(id__in=ids)
             customer = models.Customer.objects.get(user=user)
 
-            new_fav_item = models.FavItem.objects.get(
-                product=product, customer=customer
+            fav_items = models.FavItem.objects.filter(
+                product__in=products, customer=customer
             )
 
-            new_fav_item.delete()
+            fav_items.delete()
 
             return Response(
                 {"message": "The item was removed from your favorites"}, status=200
