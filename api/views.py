@@ -39,7 +39,7 @@ def routes(request):
         "favorites/",
         "favorites/create/<int:id>",
         "favorites/move/<int:id>",
-        "favorites/delete/",
+        "favorites/delete/<intlist:ids>",
         "purchase/",
         "purchase/history/",
         "purchase/update/<int:id>",
