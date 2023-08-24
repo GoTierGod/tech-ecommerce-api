@@ -9,7 +9,7 @@ from . import serializers
 from . import models
 from . import utils
 from distutils.util import strtobool
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -536,36 +536,41 @@ class PurchaseViewSet(viewsets.ViewSet):
 
             products = request.data["products"]
             payment_method = request.data["payment_method"]
-            delivery_term = request.data["delivery_term"]
             country = request.data["country"]
             city = request.data["city"]
             address = request.data["address"]
             notes = request.data["notes"]
 
+            current_date = datetime.now().date()
+            delivery_term = current_date + timedelta(days=3)
+            delivery_term_str = delivery_term.strftime("%Y-%m-%d")
+
             order = models.Order.objects.create(
                 payment_method=payment_method,
-                delivery_term=delivery_term,
+                delivery_term=delivery_term_str,
                 country=country,
                 city=city,
                 address=address,
                 notes=notes,
             )
 
-            order.save()
-
-            [
+            order_items = [
                 models.OrderItem.objects.create(
                     quantity=product["quantity"],
                     customer=models.Customer.objects.get(user=user),
                     product=models.Product.objects.get(id=product["id"]),
                     order=order,
-                ).save()
+                )
                 for product in products
             ]
+
+            order.save()
+            [item.save() for item in order_items]
 
             return Response({"message": "Order was created successfully"}, status=200)
 
         except Exception as e:
+            print(e)
             return Response({"message": "Something went wrong"}, status=400)
 
     def list(self, request):

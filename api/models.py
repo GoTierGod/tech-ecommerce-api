@@ -179,7 +179,7 @@ class Order(models.Model):
     )
 
     def __str__(self) -> str:
-        return f"{self.pk} - {self.delivered} - {self.delivery_man}"
+        return f"{self.pk} - {self.dispatched} - {self.on_the_way} - {self.delivered} - {self.delivery_man}"
 
 
 class OrderItem(models.Model):
