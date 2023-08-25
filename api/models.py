@@ -160,14 +160,6 @@ class Review(models.Model):
         unique_together = ("customer", "product")
 
 
-class Coupon(models.Model):
-    amount = models.DecimalField(max_digits=7, decimal_places=2)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-
-    def __str__(self) -> str:
-        return f"{self.amount} {self.customer.user.username}"
-
-
 class Order(models.Model):
     paid = models.DecimalField(max_digits=8, decimal_places=2, editable=False)
     purchase_date = models.DateField(auto_now_add=True, editable=False)
@@ -227,3 +219,12 @@ class FavItem(models.Model):
 
     class Meta:
         unique_together = ("product", "customer")
+
+
+class Coupon(models.Model):
+    title = models.CharField(max_length=45)
+    amount = models.DecimalField(max_digits=7, decimal_places=2)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return f"{self.amount} {self.customer.user.username}"

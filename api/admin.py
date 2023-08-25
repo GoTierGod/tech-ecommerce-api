@@ -105,5 +105,5 @@ class FavItem(admin.ModelAdmin):
 
 @admin.register(models.Coupon)
 class Coupon(admin.ModelAdmin):
-    list_display = ("id", "amount", "customer")
-    list_display_links = ("amount",)
+    list_display = ("id", "title", "amount", "customer")
+    list_display_links = ("title",)

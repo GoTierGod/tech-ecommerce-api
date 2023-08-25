@@ -540,7 +540,7 @@ class PurchaseViewSet(viewsets.ViewSet):
             city = request.data["city"]
             address = request.data["address"]
             notes = request.data["notes"]
-            coupon_id = request.data["coupon"]
+            coupon_id = request.data.get("coupon")
 
             current_date = datetime.now().date()
             delivery_term = current_date + timedelta(days=3)
