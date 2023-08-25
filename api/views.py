@@ -540,12 +540,14 @@ class PurchaseViewSet(viewsets.ViewSet):
             city = request.data["city"]
             address = request.data["address"]
             notes = request.data["notes"]
+            coupon_id = request.data["coupon"]
 
             current_date = datetime.now().date()
             delivery_term = current_date + timedelta(days=3)
             delivery_term_str = delivery_term.strftime("%Y-%m-%d")
 
             order = models.Order.objects.create(
+                paid=0,
                 payment_method=payment_method,
                 delivery_term=delivery_term_str,
                 country=country,
@@ -554,18 +556,35 @@ class PurchaseViewSet(viewsets.ViewSet):
                 notes=notes,
             )
 
+            customer = models.Customer.objects.get(user=user)
+
             order_items = [
                 models.OrderItem.objects.create(
                     quantity=product["quantity"],
-                    customer=models.Customer.objects.get(user=user),
+                    customer=customer,
                     product=models.Product.objects.get(id=product["id"]),
                     order=order,
                 )
                 for product in products
             ]
 
+            total = sum(
+                [item.product.offer_price * item.quantity for item in order_items]
+            )
+
+            if str(coupon).isdigit():
+                coupon = models.Coupon.objects.get(id=coupon_id, customer=customer)
+                total = total - coupon.amount
+
+            if len(products > 1):
+                cart_discount = total * len(order_items) / 100
+                total = total - cart_discount
+
+            order.paid = total
+
             order.save()
             [item.save() for item in order_items]
+            coupon.delete()
 
             return Response({"message": "Order was created successfully"}, status=200)
 
@@ -737,5 +756,21 @@ class ReviewViewSet(viewsets.ViewSet):
             review.delete()
             return Response({"message": "Review deleted successfully"}, status=200)
 
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
+
+
+class CouponViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        try:
+            user = request.user
+            customer = models.Customer.objects.get(user=user)
+
+            coupons = models.Coupon.objects.filter(customer=customer)
+            serialized_coupons = serializers.CouponSerializer(coupons, many=True)
+
+            return Response(serialized_coupons.data, status=200)
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)

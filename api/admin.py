@@ -74,8 +74,15 @@ class Review(admin.ModelAdmin):
 
 @admin.register(models.Order)
 class Order(admin.ModelAdmin):
-    list_display = ("id", "dispatched", "on_the_way", "delivered", "delivery_man")
-    list_display_links = ("id",)
+    list_display = (
+        "id",
+        "paid",
+        "dispatched",
+        "on_the_way",
+        "delivered",
+        "delivery_man",
+    )
+    list_display_links = ("paid",)
 
 
 @admin.register(models.OrderItem)
@@ -94,3 +101,9 @@ class CardItem(admin.ModelAdmin):
 class FavItem(admin.ModelAdmin):
     list_display = ("id", "product", "customer")
     list_display_links = ("product",)
+
+
+@admin.register(models.Coupon)
+class Coupon(admin.ModelAdmin):
+    list_display = ("id", "amount", "customer")
+    list_display_links = ("amount",)

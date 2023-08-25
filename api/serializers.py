@@ -105,3 +105,11 @@ class FavItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.FavItem
         fields = "__all__"
+
+
+class CouponSerializer(serializers.ModelSerializer):
+    product = serializers.StringRelatedField()
+
+    class Meta:
+        model = models.Coupon
+        fields = "__all__"

@@ -160,7 +160,16 @@ class Review(models.Model):
         unique_together = ("customer", "product")
 
 
+class Coupon(models.Model):
+    amount = models.DecimalField(max_digits=7, decimal_places=2)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+
+    def __str__(self) -> str:
+        return f"{self.amount} {self.customer.user.username}"
+
+
 class Order(models.Model):
+    paid = models.DecimalField(max_digits=8, decimal_places=2, editable=False)
     purchase_date = models.DateField(auto_now_add=True, editable=False)
     delivery_term = models.DateField()
     dispatched = models.BooleanField(default=False)
@@ -170,16 +179,14 @@ class Order(models.Model):
     country = models.CharField(max_length=45)
     city = models.CharField(max_length=45)
     address = models.CharField(max_length=1000)
-    postal_code = models.CharField(max_length=255, default=None, null=True)
-    notes = models.CharField(
-        max_length=255, default="", validators=[MinLengthValidator(0)]
-    )
+    postal_code = models.CharField(max_length=255, default="")
+    notes = models.CharField(max_length=255, default="")
     delivery_man = models.ForeignKey(
         DeliveryMan, on_delete=models.SET_NULL, default=None, null=True
     )
 
     def __str__(self) -> str:
-        return f"{self.pk} - {self.dispatched} - {self.on_the_way} - {self.delivered} - {self.delivery_man}"
+        return f"{self.pk} - {self.paid} - {self.dispatched} - {self.on_the_way} - {self.delivered} - {self.delivery_man}"
 
 
 class OrderItem(models.Model):
@@ -205,7 +212,7 @@ class CartItem(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
-        return f"{self.customer.user.first_name} {self.customer.user.last_name} - {self.product.name}"
+        return f"{self.customer.user.username} - {self.product.name}"
 
     class Meta:
         unique_together = ("product", "customer")
@@ -216,7 +223,7 @@ class FavItem(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
-        return f"{self.customer.user.first_name} {self.customer.user.last_name} - {self.product.name}"
+        return f"{self.customer.user.username} - {self.product.name}"
 
     class Meta:
         unique_together = ("product", "customer")
