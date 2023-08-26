@@ -572,11 +572,12 @@ class PurchaseViewSet(viewsets.ViewSet):
                 [item.product.offer_price * item.quantity for item in order_items]
             )
 
-            if str(coupon).isdigit():
+            coupon = None
+            if str(coupon_id).isdigit():
                 coupon = models.Coupon.objects.get(id=coupon_id, customer=customer)
                 total = total - coupon.amount
 
-            if len(products > 1):
+            if len(products) > 1:
                 cart_discount = total * len(order_items) / 100
                 total = total - cart_discount
 
@@ -584,7 +585,8 @@ class PurchaseViewSet(viewsets.ViewSet):
 
             order.save()
             [item.save() for item in order_items]
-            coupon.delete()
+            if coupon:
+                coupon.delete()
 
             return Response({"message": "Order was created successfully"}, status=200)
 
