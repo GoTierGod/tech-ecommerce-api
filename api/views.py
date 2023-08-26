@@ -605,7 +605,8 @@ class PurchaseViewSet(viewsets.ViewSet):
                 return Response([], status=200)
 
             serialized_purchases_data = [
-                utils.compose_purchase(order_item) for order_item in order_items
+                utils.compose_purchase(order_item, customer)
+                for order_item in order_items
             ]
 
             return Response(serialized_purchases_data, status=200)

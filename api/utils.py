@@ -78,9 +78,14 @@ def product_filters(products, request):
     return products
 
 
-def compose_purchase(order_item):
+def compose_purchase(order_item, customer):
     return {
         "order": serializers.OrderSerializer(order_item.order).data,
         "order_item": serializers.OrderItemSerializer(order_item).data,
-        "is_reviewed": models.Review.objects.filter(id=order_item.product.id).exists(),
+        "product": compose_product_info(
+            models.Product.objects.get(id=order_item.product.id)
+        ),
+        "is_reviewed": models.Review.objects.filter(
+            id=order_item.product.id, customer=customer
+        ).exists(),
     }
