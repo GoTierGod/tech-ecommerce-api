@@ -171,7 +171,6 @@ class Order(models.Model):
     country = models.CharField(max_length=45)
     city = models.CharField(max_length=45)
     address = models.CharField(max_length=1000)
-    postal_code = models.CharField(max_length=255, default="")
     notes = models.CharField(max_length=255, default="")
     delivery_man = models.ForeignKey(
         DeliveryMan, on_delete=models.SET_NULL, default=None, null=True
