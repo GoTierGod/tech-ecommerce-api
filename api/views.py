@@ -42,6 +42,7 @@ def routes(request):
         "favorites/delete/<intlist:ids>",
         "purchase/",
         "purchase/history/",
+        "purchase/history/<int:id>",
         "purchase/update/<int:id>",
         "purchase/delete/<int:id>",
         "reviews/<int:id>",
@@ -592,6 +593,26 @@ class PurchaseViewSet(viewsets.ViewSet):
 
         except Exception as e:
             print(e)
+            return Response({"message": "Something went wrong"}, status=400)
+
+    def retrieve(self, request, id):
+        try:
+            user = request.user
+
+            customer = models.Customer.objects.get(user=user)
+            order_item = models.OrderItem.objects.filter(id=id, customer=customer)
+
+            if not order_item.exists():
+                return Response(
+                    {"message": f'The product with id "{id}" does not exists'},
+                    status=404,
+                )
+
+            serialized_purchase_data = utils.compose_purchase(order_item, customer)
+
+            return Response(serialized_purchase_data, status=200)
+
+        except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
     def list(self, request):

@@ -54,6 +54,9 @@ urlpatterns = [
     path("purchase/", views.PurchaseViewSet.as_view({"post": "create"})),
     path("purchase/history/", views.PurchaseViewSet.as_view({"get": "list"})),
     path(
+        "purchase/history/<int:id>", views.PurchaseViewSet.as_view({"get": "retrieve"})
+    ),
+    path(
         "purchase/update/<int:id>", views.PurchaseViewSet.as_view({"patch": "update"})
     ),
     path(
