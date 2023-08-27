@@ -608,11 +608,12 @@ class PurchaseViewSet(viewsets.ViewSet):
                     status=404,
                 )
 
-            serialized_purchase_data = utils.compose_purchase(order_item, customer)
+            serialized_purchase_data = utils.compose_purchase(order_item[0], customer)
 
             return Response(serialized_purchase_data, status=200)
 
         except Exception as e:
+            print(e)
             return Response({"message": "Something went wrong"}, status=400)
 
     def list(self, request):
