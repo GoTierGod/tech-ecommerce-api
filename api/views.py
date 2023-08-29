@@ -138,7 +138,7 @@ class BestSellersViewSet(viewsets.ViewSet):
             return Response({"message": "Something went wrong"}, status=400)
 
 
-class SearchProductViewSet(viewsets.ViewSet):
+class SearchViewSet(viewsets.ViewSet):
     def list(self, request, search):
         try:
             page = request.query_params.get("page")
@@ -658,7 +658,6 @@ class PurchaseViewSet(viewsets.ViewSet):
             city = request.data.get("city")
             address = request.data.get("address")
             notes = request.data.get("notes")
-            postal_code = request.data.get("postal_code")
 
             if country:
                 order.country = country
@@ -668,8 +667,6 @@ class PurchaseViewSet(viewsets.ViewSet):
                 order.address = address
             if notes:
                 order.notes = notes
-            if postal_code:
-                order.postal_code = postal_code
 
             order.save()
 
