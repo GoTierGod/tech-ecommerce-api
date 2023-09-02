@@ -789,10 +789,18 @@ class ReviewViewSet(viewsets.ViewSet):
             customer = models.Customer.objects.get(user=user)
             review = models.Review.objects.get(id=id)
 
-            if models.ReviewLike.objects.filter(
+            existing_like = models.ReviewLike.objects.filter(
                 review=review, customer=customer
-            ).exists():
-                return Response({"message": "Already liked"}, status=403)
+            )
+            if existing_like.exists():
+                existing_like[0].delete()
+
+            existing_dislike = models.ReviewDislike.objects.filter(
+                review=review, customer=customer
+            )
+            if existing_dislike.exists():
+                existing_dislike[0].delete()
+                return Response({"message": "Liked removed successfully"}, status=200)
 
             models.ReviewLike.objects.create(review=review, customer=customer).save()
 
@@ -807,10 +815,20 @@ class ReviewViewSet(viewsets.ViewSet):
             customer = models.Customer.objects.get(user=user)
             review = models.Review.objects.get(id=id)
 
-            if models.ReviewDislike.objects.filter(
+            existing_dislike = models.ReviewDislike.objects.filter(
                 review=review, customer=customer
-            ).exists():
-                return Response({"message": "Already disliked"}, status=403)
+            )
+            if existing_dislike.exists():
+                existing_dislike[0].delete()
+                return Response(
+                    {"message": "Disliked removed successfully"}, status=200
+                )
+
+            existing_like = models.ReviewLike.objects.filter(
+                review=review, customer=customer
+            )
+            if existing_like.exists():
+                existing_like[0].delete()
 
             models.ReviewDislike.objects.create(review=review, customer=customer).save()
 
