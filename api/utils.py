@@ -31,12 +31,7 @@ def compose_product_info(product):
             models.ProductImage.objects.filter(product_id=product.id),
             many=True,
         ).data,
-        "sold": sum(
-            [
-                item.quantity
-                for item in models.OrderItem.objects.filter(product_id=product.id)
-            ]
-        ),
+        "sold": models.OrderItem.objects.filter(product_id=product.id).count(),
         "best_seller": is_best_seller(product),
         "reviews_counter": models.Review.objects.filter(product_id=product.id).count(),
         "rating": models.Review.objects.filter(product_id=product.id).aggregate(
@@ -88,4 +83,12 @@ def compose_purchase(order_item, customer):
         "is_reviewed": models.Review.objects.filter(
             id=order_item.product.id, customer=customer
         ).exists(),
+    }
+
+
+def compose_review(review):
+    return {
+        "review": serializers.ReviewSerializer(review).data,
+        "likes": models.ReviewLike.objects.filter(review=review).count(),
+        "dislikes": models.ReviewDislike.objects.filter(review=review).count(),
     }

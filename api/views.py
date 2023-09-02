@@ -709,9 +709,11 @@ class ReviewViewSet(viewsets.ViewSet):
             product = models.Product.objects.get(id=id)
             reviews = models.Review.objects.filter(product=product)
 
-            serialized_reviews = serializers.ReviewSerializer(reviews, many=True)
+            serialized_reviews_data = [
+                utils.compose_review(review) for review in reviews
+            ]
 
-            return Response(serialized_reviews.data, status=200)
+            return Response(serialized_reviews_data, status=200)
 
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
@@ -777,6 +779,60 @@ class ReviewViewSet(viewsets.ViewSet):
 
             review.delete()
             return Response({"message": "Review deleted successfully"}, status=200)
+
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
+
+    def like(self, request, id):
+        try:
+            user = request.user
+            customer = models.Customer.objects.get(user=user)
+            review = models.Review.objects.get(id=id)
+
+            if models.ReviewLike.objects.filter(
+                review=review, customer=customer
+            ).exists():
+                return Response({"message": "Already liked"}, status=403)
+
+            models.ReviewLike.objects.create(review=review, customer=customer).save()
+
+            return Response({"message": "Liked successfully"}, status=200)
+
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
+
+    def dislike(self, request, id):
+        try:
+            user = request.user
+            customer = models.Customer.objects.get(user=user)
+            review = models.Review.objects.get(id=id)
+
+            if models.ReviewDislike.objects.filter(
+                review=review, customer=customer
+            ).exists():
+                return Response({"message": "Already disliked"}, status=403)
+
+            models.ReviewDislike.objects.create(review=review, customer=customer).save()
+
+            return Response({"message": "Liked successfully"}, status=200)
+
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
+
+    def report(self, request, id):
+        try:
+            user = request.user
+            customer = models.Customer.objects.get(user=user)
+            review = models.Review.objects.get(id=id)
+
+            if models.ReviewReport.objects.filter(
+                review=review, customer=customer
+            ).exists():
+                return Response({"message": "Already reported"}, status=403)
+
+            models.ReviewReport.objects.create(review=review, customer=customer).save()
+
+            return Response({"message": "Liked successfully"}, status=200)
 
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)

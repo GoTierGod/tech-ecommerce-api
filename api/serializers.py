@@ -71,6 +71,33 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ReviewLike(serializers.ModelSerializer):
+    review = serializers.StringRelatedField()
+    customer = serializers.StringRelatedField()
+
+    class Meta:
+        model = models.ReviewLike
+        fields = "__all__"
+
+
+class ReviewDislike(serializers.ModelSerializer):
+    review = serializers.StringRelatedField()
+    customer = serializers.StringRelatedField()
+
+    class Meta:
+        model = models.ReviewDislike
+        fields = "__all__"
+
+
+class ReviewReport(serializers.ModelSerializer):
+    review = serializers.StringRelatedField()
+    customer = serializers.StringRelatedField()
+
+    class Meta:
+        model = models.ReviewReport
+        fields = "__all__"
+
+
 class OrderSerializer(serializers.ModelSerializer):
     delivery_man = serializers.StringRelatedField()
 

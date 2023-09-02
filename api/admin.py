@@ -72,6 +72,24 @@ class Review(admin.ModelAdmin):
     list_display_links = ("product",)
 
 
+@admin.register(models.ReviewLike)
+class ReviewLike(admin.ModelAdmin):
+    list_display = ("id", "review", "customer")
+    list_display_links = ("review",)
+
+
+@admin.register(models.ReviewDislike)
+class ReviewDislike(admin.ModelAdmin):
+    list_display = ("id", "review", "customer")
+    list_display_links = ("review",)
+
+
+@admin.register(models.ReviewReport)
+class ReviewReport(admin.ModelAdmin):
+    list_display = ("id", "review", "customer")
+    list_display_links = ("review",)
+
+
 @admin.register(models.Order)
 class Order(admin.ModelAdmin):
     list_display = (

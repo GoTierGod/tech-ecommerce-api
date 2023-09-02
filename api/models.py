@@ -133,12 +133,6 @@ class Review(models.Model):
         max_length=500, default="", validators=[MinLengthValidator(0)]
     )
     date = models.DateField(auto_now_add=True, editable=False)
-    likes = models.PositiveSmallIntegerField(
-        validators=[MaxValueValidator(10000)], default=0
-    )
-    dislikes = models.PositiveSmallIntegerField(
-        validators=[MaxValueValidator(10000)], default=0
-    )
     is_useful = models.BooleanField(default=False)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -158,6 +152,30 @@ class Review(models.Model):
 
     class Meta:
         unique_together = ("customer", "product")
+
+
+class ReviewLike(models.Model):
+    review = models.ForeignKey(Review, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("review", "customer")
+
+
+class ReviewDislike(models.Model):
+    review = models.ForeignKey(Review, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("review", "customer")
+
+
+class ReviewReport(models.Model):
+    review = models.ForeignKey(Review, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("review", "customer")
 
 
 class Order(models.Model):
