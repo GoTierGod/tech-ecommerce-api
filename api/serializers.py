@@ -63,7 +63,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    customer = serializers.StringRelatedField()
+    customer = CustomerSerializer()
     product = serializers.StringRelatedField()
 
     class Meta:
