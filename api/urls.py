@@ -6,21 +6,21 @@ register_converter(IntListConverter, "intlist")
 
 urlpatterns = [
     path("", views.routes),
-    # products
+    # Products
     path("products/", views.ProductViewSet.as_view({"get": "list"})),
     path("products/<int:id>", views.ProductViewSet.as_view({"get": "retrieve"})),
-    # brands
+    # Brands
     path("brands/", views.BrandViewSet.as_view({"get": "list"})),
-    # categories
+    # Categories
     path("categories/", views.CategoryViewSet.as_view({"get": "list"})),
-    # best sellers
+    # Best Sellers
     path("best-sellers/", views.BestSellersViewSet.as_view({"get": "list"})),
     path(
         "best-sellers/<str:category>", views.BestSellersViewSet.as_view({"get": "list"})
     ),
-    # search
+    # Search
     path("search/<str:search>", views.SearchViewSet.as_view({"get": "list"})),
-    # user
+    # User
     path(
         "customer/",
         views.CustomerViewSet.as_view({"get": "retrieve"}),
@@ -28,7 +28,7 @@ urlpatterns = [
     path("customer/create/", views.CustomerViewSet.as_view({"post": "create"})),
     path("customer/update/", views.CustomerViewSet.as_view({"patch": "update"})),
     path("customer/delete/", views.CustomerViewSet.as_view({"delete": "delete"})),
-    # cart
+    # Cart
     path("cart/", views.CardItemViewSet.as_view({"get": "list"})),
     path(
         "cart/create/<int:id>",
@@ -39,7 +39,7 @@ urlpatterns = [
         views.CardItemViewSet.as_view({"delete": "delete"}),
     ),
     path("cart/move/<int:id>", views.CardItemViewSet.as_view({"patch": "update"})),
-    # favorites
+    # Favorites
     path("favorites/", views.FavItemViewSet.as_view({"get": "list"})),
     path(
         "favorites/create/<int:id>",
@@ -50,7 +50,7 @@ urlpatterns = [
         views.FavItemViewSet.as_view({"delete": "delete"}),
     ),
     path("favorites/move/<int:id>", views.FavItemViewSet.as_view({"patch": "update"})),
-    # purchase
+    # Purchase
     path("purchase/", views.PurchaseViewSet.as_view({"post": "create"})),
     path("purchase/history/", views.PurchaseViewSet.as_view({"get": "list"})),
     path(
@@ -62,21 +62,33 @@ urlpatterns = [
     path(
         "purchase/delete/<int:id>", views.PurchaseViewSet.as_view({"delete": "delete"})
     ),
-    # review
-    path("review/<int:id>/like/", views.ReviewViewSet.as_view({"patch": "like"})),
+    # Reviews
     path(
-        "review/<int:id>/dislike/",
+        "reviews/<int:review_id>/like/", views.ReviewViewSet.as_view({"patch": "like"})
+    ),
+    path(
+        "reviews/<int:review_id>/dislike/",
         views.ReviewViewSet.as_view({"patch": "dislike"}),
     ),
     path(
-        "review/<int:id>/report/",
+        "reviews/<int:review_id>/report/",
         views.ReviewViewSet.as_view({"patch": "report"}),
     ),
-    # reviews
-    path("reviews/<int:id>", views.ReviewViewSet.as_view({"get": "list"})),
-    path("reviews/create/<int:id>", views.ReviewViewSet.as_view({"post": "create"})),
-    path("reviews/update/<int:id>", views.ReviewViewSet.as_view({"patch": "update"})),
-    path("reviews/delete/<int:id>", views.ReviewViewSet.as_view({"delete": "delete"})),
-    # coupons
+    path(
+        "reviews/product/<int:product_id>", views.ReviewViewSet.as_view({"get": "list"})
+    ),
+    path(
+        "reviews/product/<int:product_id>/create/",
+        views.ReviewViewSet.as_view({"post": "create"}),
+    ),
+    path(
+        "reviews/product/<int:product_id>/update/",
+        views.ReviewViewSet.as_view({"patch": "update"}),
+    ),
+    path(
+        "reviews/product/<int:product_id>/delete/",
+        views.ReviewViewSet.as_view({"delete": "delete"}),
+    ),
+    # Coupons
     path("coupons/", views.CouponViewSet.as_view({"get": "list"})),
 ]

@@ -704,9 +704,9 @@ class PurchaseViewSet(viewsets.ViewSet):
 
 
 class ReviewViewSet(viewsets.ViewSet):
-    def list(self, request, id):
+    def list(self, request, product_id):
         try:
-            product = models.Product.objects.get(id=id)
+            product = models.Product.objects.get(id=product_id)
             reviews = models.Review.objects.filter(product=product)
 
             serialized_reviews_data = [
@@ -718,11 +718,11 @@ class ReviewViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
-    def create(self, request, id):
+    def create(self, request, product_id):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
-            product = models.Product.objects.get(id=id)
+            product = models.Product.objects.get(id=product_id)
 
             rating = request.data["rating"]
             title = request.data["title"]
@@ -743,11 +743,11 @@ class ReviewViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
-    def update(self, request, id):
+    def update(self, request, product_id):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
-            product = models.Product.objects.get(id=id)
+            product = models.Product.objects.get(id=product_id)
 
             review = models.Review.objects.get(customer=customer, product=product)
 
@@ -769,11 +769,11 @@ class ReviewViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
-    def delete(self, request, id):
+    def delete(self, request, product_id):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
-            product = models.Product.objects.get(id=id)
+            product = models.Product.objects.get(id=product_id)
 
             review = models.Review.objects.get(customer=customer, product=product)
 
@@ -783,11 +783,11 @@ class ReviewViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
-    def like(self, request, id):
+    def like(self, request, review_id):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
-            review = models.Review.objects.get(id=id)
+            review = models.Review.objects.get(id=review_id)
 
             existing_like = models.ReviewLike.objects.filter(
                 review=review, customer=customer
@@ -809,11 +809,11 @@ class ReviewViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
-    def dislike(self, request, id):
+    def dislike(self, request, review_id):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
-            review = models.Review.objects.get(id=id)
+            review = models.Review.objects.get(id=review_id)
 
             existing_dislike = models.ReviewDislike.objects.filter(
                 review=review, customer=customer
@@ -837,11 +837,11 @@ class ReviewViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
-    def report(self, request, id):
+    def report(self, request, review_id):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
-            review = models.Review.objects.get(id=id)
+            review = models.Review.objects.get(id=review_id)
 
             if models.ReviewReport.objects.filter(
                 review=review, customer=customer
