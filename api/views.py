@@ -388,11 +388,11 @@ class CardItemViewSet(viewsets.ViewSet):
 
         return Response(serialized_products_data, status=200)
 
-    def create(self, request, id):
+    def create(self, request, product_id):
         try:
             user = request.user
 
-            product = models.Product.objects.get(id=id)
+            product = models.Product.objects.get(id=product_id)
             customer = models.Customer.objects.get(user=user)
 
             new_cart_item = models.CartItem.objects.create(
@@ -406,11 +406,11 @@ class CardItemViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
-    def delete(self, request, id):
+    def delete(self, request, product_id):
         try:
             user = request.user
 
-            product = models.Product.objects.get(id=id)
+            product = models.Product.objects.get(id=product_id)
             customer = models.Customer.objects.get(user=user)
 
             new_cart_item = models.CartItem.objects.get(
@@ -426,11 +426,11 @@ class CardItemViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
-    def update(self, request, id):
+    def update(self, request, product_id):
         try:
             user = request.user
 
-            product = models.Product.objects.get(id=id)
+            product = models.Product.objects.get(id=product_id)
             customer = models.Customer.objects.get(user=user)
 
             new_fav_item = models.FavItem.objects.create(
@@ -464,11 +464,11 @@ class FavItemViewSet(viewsets.ViewSet):
 
         return Response(serialized_products_data, status=200)
 
-    def create(self, request, id):
+    def create(self, request, product_id):
         try:
             user = request.user
 
-            product = models.Product.objects.get(id=id)
+            product = models.Product.objects.get(id=product_id)
             customer = models.Customer.objects.get(user=user)
 
             new_fav_item = models.FavItem.objects.create(
@@ -484,11 +484,11 @@ class FavItemViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
-    def delete(self, request, ids=None):
+    def delete(self, request, product_ids=None):
         try:
             user = request.user
 
-            products = models.Product.objects.filter(id__in=ids)
+            products = models.Product.objects.filter(id__in=product_ids)
             customer = models.Customer.objects.get(user=user)
 
             fav_items = models.FavItem.objects.filter(
@@ -504,11 +504,11 @@ class FavItemViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
-    def update(self, request, id):
+    def update(self, request, product_id):
         try:
             user = request.user
 
-            product = models.Product.objects.get(id=id)
+            product = models.Product.objects.get(id=product_id)
             customer = models.Customer.objects.get(user=user)
 
             new_cart_item = models.CartItem.objects.create(
