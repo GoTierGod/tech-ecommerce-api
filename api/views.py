@@ -75,12 +75,13 @@ class ProductViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
-    def retrieve(self, request, id):
+    def retrieve(self, request, product_id):
         try:
-            product = models.Product.objects.get(id=id)
+            product = models.Product.objects.get(id=product_id)
         except ObjectDoesNotExist:
             return Response(
-                {"message": f'The product with ID "{id}" was not found.'}, status=404
+                {"message": f'The product with ID "{product_id}" was not found.'},
+                status=404,
             )
 
         return Response(
@@ -595,27 +596,6 @@ class PurchaseViewSet(viewsets.ViewSet):
             print(e)
             return Response({"message": "Something went wrong"}, status=400)
 
-    def retrieve(self, request, id):
-        try:
-            user = request.user
-
-            customer = models.Customer.objects.get(user=user)
-            order_item = models.OrderItem.objects.filter(id=id, customer=customer)
-
-            if not order_item.exists():
-                return Response(
-                    {"message": f'The product with id "{id}" does not exists'},
-                    status=404,
-                )
-
-            serialized_purchase_data = utils.compose_purchase(order_item[0], customer)
-
-            return Response(serialized_purchase_data, status=200)
-
-        except Exception as e:
-            print(e)
-            return Response({"message": "Something went wrong"}, status=400)
-
     def list(self, request):
         try:
             user = request.user
@@ -636,12 +616,37 @@ class PurchaseViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
-    def update(self, request, id):
+    def retrieve(self, request, order_item_id):
+        try:
+            user = request.user
+
+            customer = models.Customer.objects.get(user=user)
+            order_item = models.OrderItem.objects.filter(
+                id=order_item_id, customer=customer
+            )
+
+            if not order_item.exists():
+                return Response(
+                    {
+                        "message": f'The product with id "{order_item_id}" does not exists'
+                    },
+                    status=404,
+                )
+
+            serialized_purchase_data = utils.compose_purchase(order_item[0], customer)
+
+            return Response(serialized_purchase_data, status=200)
+
+        except Exception as e:
+            print(e)
+            return Response({"message": "Something went wrong"}, status=400)
+
+    def update(self, request, order_id):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
 
-            order = models.Order.objects.get(id=id)
+            order = models.Order.objects.get(id=order_id)
             order_items = models.OrderItem.objects.filter(
                 order=order, customer=customer
             )
@@ -675,12 +680,12 @@ class PurchaseViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
-    def delete(self, request, id):
+    def delete(self, request, order_id):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
 
-            order = models.Order.objects.get(id=id)
+            order = models.Order.objects.get(id=order_id)
             order_items = models.OrderItem.objects.filter(
                 order=order, customer=customer
             )
