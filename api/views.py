@@ -590,7 +590,6 @@ class PurchaseViewSet(viewsets.ViewSet):
             return Response({"message": "Order was created successfully"}, status=200)
 
         except Exception as e:
-            print(e)
             return Response({"message": "Something went wrong"}, status=400)
 
     def list(self, request):
@@ -634,7 +633,6 @@ class PurchaseViewSet(viewsets.ViewSet):
             return Response(serialized_purchase_data, status=200)
 
         except Exception as e:
-            print(e)
             return Response({"message": "Something went wrong"}, status=400)
 
     def update(self, request, order_id):
@@ -705,6 +703,13 @@ class PurchaseViewSet(viewsets.ViewSet):
 
 
 class ReviewViewSet(viewsets.ViewSet):
+    def get_permissions(self):
+        if self.action == "list":
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
     def list(self, request, product_id):
         try:
             product = models.Product.objects.get(id=product_id)
