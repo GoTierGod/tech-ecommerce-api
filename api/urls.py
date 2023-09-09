@@ -64,7 +64,7 @@ urlpatterns = [
         views.PurchaseViewSet.as_view({"patch": "update"}),
     ),
     path(
-        "purchase/<int:order_id>/delete",
+        "purchase/<int:order_id>/delete/",
         views.PurchaseViewSet.as_view({"delete": "delete"}),
     ),
     # History
