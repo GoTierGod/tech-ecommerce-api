@@ -160,6 +160,8 @@ class SearchViewSet(viewsets.ViewSet):
             brands = set(p.brand for p in products)
             serialized_brands = serializers.BrandSerializer(brands, many=True)
 
+            installments = set(p.installments for p in products)
+
             products = utils.filter_products(products, request)
             results = len(products)
 
@@ -179,6 +181,7 @@ class SearchViewSet(viewsets.ViewSet):
                     "products": serialized_products_data,
                     "categories": serialized_categories.data,
                     "brands": serialized_brands.data,
+                    "installments": installments,
                 },
                 status=200,
             )
