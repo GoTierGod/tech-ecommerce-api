@@ -61,14 +61,12 @@ class ProductViewSet(viewsets.ViewSet):
             page = int(page) if str(page).isnumeric() else 1
 
             products = models.Product.objects.all()
-            filtered_products = utils.product_filters(products, request)
+            filtered_products = utils.filter_products(products, request)
 
             paginator = Paginator(filtered_products, 10)
             page_queryset = paginator.get_page(page)
 
-            serialized_products_data = [
-                utils.compose_product_info(p) for p in page_queryset
-            ]
+            serialized_products_data = [utils.compose_product(p) for p in page_queryset]
 
             return Response(serialized_products_data, status=200)
 
@@ -85,7 +83,7 @@ class ProductViewSet(viewsets.ViewSet):
             )
 
         return Response(
-            utils.compose_product_info(product),
+            utils.compose_product(product),
             status=200,
         )
 
@@ -129,9 +127,7 @@ class BestSellersViewSet(viewsets.ViewSet):
             paginator = Paginator(products, 10)
             page_queryset = paginator.get_page(page)
 
-            serialized_products_data = [
-                utils.compose_product_info(p) for p in page_queryset
-            ]
+            serialized_products_data = [utils.compose_product(p) for p in page_queryset]
 
             return Response(serialized_products_data, status=200)
 
@@ -164,7 +160,7 @@ class SearchViewSet(viewsets.ViewSet):
             brands = set(p.brand for p in products)
             serialized_brands = serializers.BrandSerializer(brands, many=True)
 
-            products = utils.product_filters(products, request)
+            products = utils.filter_products(products, request)
             results = len(products)
 
             order_by_field = request.query_params.get("order_by")
@@ -174,9 +170,7 @@ class SearchViewSet(viewsets.ViewSet):
             paginator = Paginator(products, 10)
             page_queryset = paginator.get_page(page)
 
-            serialized_products_data = [
-                utils.compose_product_info(p) for p in page_queryset
-            ]
+            serialized_products_data = [utils.compose_product(p) for p in page_queryset]
 
             return Response(
                 {
@@ -383,7 +377,7 @@ class CardItemViewSet(viewsets.ViewSet):
 
         cart_items = models.CartItem.objects.filter(customer__user=user)
         serialized_products_data = [
-            utils.compose_product_info(cart_item.product) for cart_item in cart_items
+            utils.compose_product(cart_item.product) for cart_item in cart_items
         ]
 
         return Response(serialized_products_data, status=200)
@@ -459,7 +453,7 @@ class FavItemViewSet(viewsets.ViewSet):
 
         fav_items = models.FavItem.objects.filter(customer__user=user)
         serialized_products_data = [
-            utils.compose_product_info(fav_item.product) for fav_item in fav_items
+            utils.compose_product(fav_item.product) for fav_item in fav_items
         ]
 
         return Response(serialized_products_data, status=200)
@@ -607,8 +601,7 @@ class PurchaseViewSet(viewsets.ViewSet):
                 return Response([], status=200)
 
             serialized_purchases_data = [
-                utils.compose_purchase(order_item, customer)
-                for order_item in order_items
+                utils.compose_purchase(order_item) for order_item in order_items
             ]
 
             return Response(serialized_purchases_data, status=200)
@@ -633,7 +626,7 @@ class PurchaseViewSet(viewsets.ViewSet):
                     status=404,
                 )
 
-            serialized_purchase_data = utils.compose_purchase(order_item[0], customer)
+            serialized_purchase_data = utils.compose_purchase(order_item[0])
 
             return Response(serialized_purchase_data, status=200)
 

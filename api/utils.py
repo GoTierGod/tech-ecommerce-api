@@ -1,9 +1,72 @@
+from rest_framework.response import Response
 from django.db.models import Avg, Count, Sum
 
 from . import serializers
 from . import models
 
 from distutils.util import strtobool
+
+
+def compose_product(product):
+    return {
+        "details": serializers.ProductSerializer(product).data,
+        "default_img": serializers.ProductImageSerializer(
+            models.ProductImage.objects.get(product=product, is_default=True)
+        ).data,
+        "images": serializers.ProductImageSerializer(
+            models.ProductImage.objects.filter(product=product),
+            many=True,
+        ).data,
+        "sold": models.OrderItem.objects.filter(product=product).count(),
+        "best_seller": is_best_seller(product),
+        "reviews_counter": models.Review.objects.filter(product=product).count(),
+        "rating": models.Review.objects.filter(product=product).aggregate(
+            Avg("rating")
+        )["rating__avg"],
+    }
+
+
+def compose_purchase(order_item):
+    return {
+        "order": serializers.OrderSerializer(order_item.order).data,
+        "order_item": serializers.OrderItemSerializer(order_item).data,
+        "product": compose_product(order_item.product),
+        "is_reviewed": models.Review.objects.filter(
+            product=order_item.product, customer=order_item.customer
+        ).exists(),
+    }
+
+
+def compose_review(review):
+    return {
+        "review": serializers.ReviewSerializer(review).data,
+        "likes": models.ReviewLike.objects.filter(review=review).count(),
+        "dislikes": models.ReviewDislike.objects.filter(review=review).count(),
+    }
+
+
+def filter_products(products, request):
+    category = request.query_params.get("category")
+    brand = request.query_params.get("brand")
+    is_gamer = request.query_params.get("is_gamer")
+    min_price = request.query_params.get("min_price")
+    max_price = request.query_params.get("max_price")
+    installments = request.query_params.get("installments")
+
+    if category:
+        products = products.filter(category__title__iexact=category)
+    if brand:
+        products = products.filter(brand__name__iexact=brand)
+    if is_gamer:
+        products = products.filter(is_gamer=strtobool(is_gamer))
+    if min_price:
+        products = products.filter(offer_price__gte=min_price)
+    if max_price:
+        products = products.filter(offer_price__lte=max_price)
+    if installments:
+        products = products.filter(installments=installments)
+
+    return products
 
 
 def is_best_seller(product):
@@ -19,76 +82,3 @@ def is_best_seller(product):
 
     products = products.filter(id__in=bs_products)
     return products.filter(id=product.id).exists()
-
-
-def compose_product_info(product):
-    return {
-        "details": serializers.ProductSerializer(product).data,
-        "default_img": serializers.ProductImageSerializer(
-            models.ProductImage.objects.get(product_id=product.id, is_default=True)
-        ).data,
-        "images": serializers.ProductImageSerializer(
-            models.ProductImage.objects.filter(product_id=product.id),
-            many=True,
-        ).data,
-        "sold": models.OrderItem.objects.filter(product_id=product.id).count(),
-        "best_seller": is_best_seller(product),
-        "reviews_counter": models.Review.objects.filter(product_id=product.id).count(),
-        "rating": models.Review.objects.filter(product_id=product.id).aggregate(
-            Avg("rating")
-        )["rating__avg"],
-    }
-
-
-def product_filters(products, request):
-    category = request.query_params.get("category")
-    brand = request.query_params.get("brand")
-    is_gamer = request.query_params.get("is_gamer")
-    min_price = request.query_params.get("min_price")
-    max_price = request.query_params.get("max_price")
-    installments = request.query_params.get("installments")
-
-    if category:
-        products = products.filter(category__title__iexact=category)
-    if brand:
-        products = products.filter(brand__name__iexact=brand)
-    if is_gamer:
-        products = products.filter(is_gamer=strtobool(is_gamer))
-    if min_price:
-        try:
-            products = products.filter(offer_price__gte=float(min_price))
-        except ValueError:
-            pass
-    if max_price:
-        try:
-            products = products.filter(offer_price__lte=float(max_price))
-        except ValueError:
-            pass
-    if installments:
-        try:
-            products = products.filter(installments=int(installments))
-        except ValueError:
-            pass
-
-    return products
-
-
-def compose_purchase(order_item, customer):
-    return {
-        "order": serializers.OrderSerializer(order_item.order).data,
-        "order_item": serializers.OrderItemSerializer(order_item).data,
-        "product": compose_product_info(
-            models.Product.objects.get(id=order_item.product.id)
-        ),
-        "is_reviewed": models.Review.objects.filter(
-            id=order_item.product.id, customer=customer
-        ).exists(),
-    }
-
-
-def compose_review(review):
-    return {
-        "review": serializers.ReviewSerializer(review).data,
-        "likes": models.ReviewLike.objects.filter(review=review).count(),
-        "dislikes": models.ReviewDislike.objects.filter(review=review).count(),
-    }
