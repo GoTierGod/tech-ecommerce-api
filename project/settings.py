@@ -50,8 +50,8 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
-    "api",
     "corsheaders",
+    "api",
 ]
 
 MIDDLEWARE = [
@@ -215,5 +215,5 @@ CORS_ORIGIN_WHITELIST = (
         "http://localhost:3000",
     ]
     if strtobool(os.environ.get("DEBUG_MODE") or "False")
-    else []
+    else ["https://tech-ecommerce-five.vercel.app"]
 )
