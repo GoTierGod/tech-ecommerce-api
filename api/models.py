@@ -190,6 +190,9 @@ class Order(models.Model):
     city = models.CharField(max_length=45)
     address = models.CharField(max_length=1000)
     notes = models.CharField(max_length=255, default="")
+    customer = models.ForeignKey(
+        Customer, on_delete=models.SET_NULL, default=None, null=True
+    )
     delivery_man = models.ForeignKey(
         DeliveryMan, on_delete=models.SET_NULL, default=None, null=True
     )
@@ -197,13 +200,22 @@ class Order(models.Model):
     def __str__(self) -> str:
         return f"{self.pk} - {self.paid} - {self.dispatched} - {self.on_the_way} - {self.delivered} - {self.delivery_man}"
 
+    def clean(self) -> None:
+        super().clean()
+        max_active_orders = 3
+        current_active_orders = Order.objects.filter(
+            customer=self.customer, delivered=False
+        ).count()
+
+        if current_active_orders >= max_active_orders:
+            raise ValidationError("You cannot have more than 3 active orders.")
+
 
 class OrderItem(models.Model):
     total_cost = models.DecimalField(max_digits=7, decimal_places=2, editable=False)
     quantity = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)],
     )
-    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True)
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
     order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True)
 
@@ -223,6 +235,14 @@ class CartItem(models.Model):
     def __str__(self) -> str:
         return f"{self.customer.user.username} - {self.product.name}"
 
+    def clean(self) -> None:
+        super().clean()
+        max_cart_items = 10
+        current_cart_items = CartItem.objects.filter(customer=self.customer).count()
+
+        if current_cart_items >= max_cart_items:
+            raise ValidationError("You cannot add more than 10 products to your cart.")
+
     class Meta:
         unique_together = ("product", "customer")
 
@@ -233,6 +253,16 @@ class FavItem(models.Model):
 
     def __str__(self) -> str:
         return f"{self.customer.user.username} - {self.product.name}"
+
+    def clean(self) -> None:
+        super().clean()
+        max_favorite_items = 25
+        current_favorite_items = FavItem.objects.filter(customer=self.customer).count()
+
+        if current_favorite_items >= max_favorite_items:
+            raise ValidationError(
+                "You cannot add more than 25 products to your favorites."
+            )
 
     class Meta:
         unique_together = ("product", "customer")

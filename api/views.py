@@ -388,9 +388,18 @@ class CardItemViewSet(viewsets.ViewSet):
     def create(self, request, product_id):
         try:
             user = request.user
+            customer = models.Customer.objects.get(user=user)
+
+            current_cart_items = models.CartItem.objects.filter(
+                customer=customer
+            ).count()
+            if current_cart_items >= 10:
+                return Response(
+                    {"message": "You cannot add more than 10 products to your cart."},
+                    status=403,
+                )
 
             product = models.Product.objects.get(id=product_id)
-            customer = models.Customer.objects.get(user=user)
 
             new_cart_item = models.CartItem.objects.create(
                 product=product, customer=customer
@@ -426,9 +435,18 @@ class CardItemViewSet(viewsets.ViewSet):
     def update(self, request, product_id):
         try:
             user = request.user
+            customer = models.Customer.objects.get(user=user)
+
+            current_fav_items = models.FavItem.objects.filter(customer=customer).count()
+            if current_fav_items >= 25:
+                return Response(
+                    {
+                        "message": "You cannot add more than 25 products to your favorites"
+                    },
+                    status=403,
+                )
 
             product = models.Product.objects.get(id=product_id)
-            customer = models.Customer.objects.get(user=user)
 
             new_fav_item = models.FavItem.objects.create(
                 product=product, customer=customer
@@ -453,8 +471,9 @@ class FavItemViewSet(viewsets.ViewSet):
 
     def list(self, request):
         user = request.user
+        customer = models.Customer.objects.get(user=user)
 
-        fav_items = models.FavItem.objects.filter(customer__user=user)
+        fav_items = models.FavItem.objects.filter(customer=customer)
         serialized_products_data = [
             utils.compose_product(fav_item.product) for fav_item in fav_items
         ]
@@ -464,9 +483,18 @@ class FavItemViewSet(viewsets.ViewSet):
     def create(self, request, product_id):
         try:
             user = request.user
+            customer = models.Customer.objects.get(user=user)
+
+            current_fav_items = models.FavItem.objects.filter(customer=customer).count()
+            if current_fav_items >= 25:
+                return Response(
+                    {
+                        "message": "You cannot add more than 25 products to your favorites"
+                    },
+                    status=403,
+                )
 
             product = models.Product.objects.get(id=product_id)
-            customer = models.Customer.objects.get(user=user)
 
             new_fav_item = models.FavItem.objects.create(
                 product=product, customer=customer
@@ -505,8 +533,18 @@ class FavItemViewSet(viewsets.ViewSet):
         try:
             user = request.user
 
-            product = models.Product.objects.get(id=product_id)
             customer = models.Customer.objects.get(user=user)
+
+            current_cart_items = models.CartItem.objects.filter(
+                customer=customer
+            ).count()
+            if current_cart_items >= 10:
+                return Response(
+                    {"message": "You cannot add more than 10 products to your cart."},
+                    status=403,
+                )
+
+            product = models.Product.objects.get(id=product_id)
 
             new_cart_item = models.CartItem.objects.create(
                 product=product, customer=customer
@@ -532,6 +570,15 @@ class PurchaseViewSet(viewsets.ViewSet):
     def create(self, request):
         try:
             user = request.user
+            customer = models.Customer.objects.get(user=user)
+
+            current_active_orders = models.Order.objects.filter(
+                customer=customer, delivered=False
+            ).count()
+            if current_active_orders >= 3:
+                return Response(
+                    {"message": "You cannot have more than 3 active orders"}, status=403
+                )
 
             products = request.data["products"]
             payment_method = request.data["payment_method"]
@@ -554,8 +601,6 @@ class PurchaseViewSet(viewsets.ViewSet):
                 address=address,
                 notes=notes,
             )
-
-            customer = models.Customer.objects.get(user=user)
 
             order_items = [
                 models.OrderItem.objects.create(
