@@ -15,6 +15,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
 from django.core.validators import validate_email
+from profanity_check import predict
 
 
 @permission_classes([IsAuthenticated, IsAdminUser])
@@ -229,6 +230,11 @@ class CustomerViewSet(viewsets.ViewSet):
                     return Response({"message": "Username is too short"}, status=403)
                 if len(username) > 16:
                     return Response({"message": "Username is too long"}, status=403)
+                if predict(username):
+                    return Response(
+                        {"message": "Username was detected as inappropriate"},
+                        status=403,
+                    )
 
                 validate_email(email)
                 if models.User.objects.filter(email=email).exists():
@@ -324,6 +330,11 @@ class CustomerViewSet(viewsets.ViewSet):
                     return Response({"message": "Username is too short"}, status=403)
                 if len(new_username) > 16:
                     return Response({"message": "Username is too long"}, status=403)
+                if predict(new_username):
+                    return Response(
+                        {"message": "Username was detected as inappropriate"},
+                        status=403,
+                    )
 
             if new_phone:
                 customer.phone = new_phone
