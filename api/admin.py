@@ -98,6 +98,7 @@ class Order(admin.ModelAdmin):
         "dispatched",
         "on_the_way",
         "delivered",
+        "customer",
         "delivery_man",
     )
     list_display_links = ("paid",)
@@ -105,7 +106,7 @@ class Order(admin.ModelAdmin):
 
 @admin.register(models.OrderItem)
 class OrderItem(admin.ModelAdmin):
-    list_display = ("id", "product", "customer")
+    list_display = ("id", "product")
     list_display_links = ("product",)
 
 
