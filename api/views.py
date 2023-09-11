@@ -845,13 +845,13 @@ class ReviewViewSet(viewsets.ViewSet):
             )
             if existing_like.exists():
                 existing_like[0].delete()
+                return Response({"message": "Liked removed successfully"}, status=200)
 
             existing_dislike = models.ReviewDislike.objects.filter(
                 review=review, customer=customer
             )
             if existing_dislike.exists():
                 existing_dislike[0].delete()
-                return Response({"message": "Liked removed successfully"}, status=200)
 
             models.ReviewLike.objects.create(review=review, customer=customer).save()
 
@@ -883,7 +883,7 @@ class ReviewViewSet(viewsets.ViewSet):
 
             models.ReviewDislike.objects.create(review=review, customer=customer).save()
 
-            return Response({"message": "Liked successfully"}, status=200)
+            return Response({"message": "Disliked successfully"}, status=200)
 
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
@@ -901,7 +901,7 @@ class ReviewViewSet(viewsets.ViewSet):
 
             models.ReviewReport.objects.create(review=review, customer=customer).save()
 
-            return Response({"message": "Liked successfully"}, status=200)
+            return Response({"message": "Reported"}, status=200)
 
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
