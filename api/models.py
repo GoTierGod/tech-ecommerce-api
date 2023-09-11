@@ -134,6 +134,7 @@ class Review(models.Model):
     )
     date = models.DateField(auto_now_add=True, editable=False)
     is_useful = models.BooleanField(default=False)
+    hidden = models.BooleanField(default=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
@@ -144,11 +145,6 @@ class Review(models.Model):
         super().clean()
         if self.rating % 0.5 != 0:
             raise ValidationError("Rating can only be incremented by 0.5.")
-
-    def save(self, *args, **kwargs):
-        self.useful = True if self.likes >= self.dislikes else False
-
-        super().save(*args, **kwargs)
 
     class Meta:
         unique_together = ("customer", "product")
