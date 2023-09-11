@@ -225,6 +225,10 @@ class CustomerViewSet(viewsets.ViewSet):
                         },
                         status=409,
                     )
+                if len(username) < 8:
+                    return Response({"message": "Username is too short"}, status=403)
+                if len(username) > 16:
+                    return Response({"message": "Username is too long"}, status=403)
 
                 validate_email(email)
                 if models.User.objects.filter(email=email).exists():
@@ -316,6 +320,10 @@ class CustomerViewSet(viewsets.ViewSet):
                     )
                 else:
                     user.username = new_username
+                if len(new_username) < 8:
+                    return Response({"message": "Username is too short"}, status=403)
+                if len(new_username) > 16:
+                    return Response({"message": "Username is too long"}, status=403)
 
             if new_phone:
                 customer.phone = new_phone
