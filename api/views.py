@@ -8,6 +8,7 @@ from django.core.paginator import Paginator
 from . import serializers
 from . import models
 from . import utils
+from . import validators
 from distutils.util import strtobool
 from datetime import datetime, timedelta
 
@@ -15,7 +16,6 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
 from django.core.validators import validate_email
-from profanity_check import predict
 
 
 @permission_classes([IsAuthenticated, IsAdminUser])
@@ -230,11 +230,10 @@ class CustomerViewSet(viewsets.ViewSet):
                     return Response({"message": "Username is too short"}, status=403)
                 if len(username) > 16:
                     return Response({"message": "Username is too long"}, status=403)
-                if predict(username):
-                    return Response(
-                        {"message": "Username was detected as inappropriate"},
-                        status=403,
-                    )
+                try:
+                    validators.profanity_filter(username)
+                except ValidationError as e:
+                    return Response({"message": e.message}, status=403)
 
                 validate_email(email)
                 if models.User.objects.filter(email=email).exists():
@@ -330,11 +329,10 @@ class CustomerViewSet(viewsets.ViewSet):
                     return Response({"message": "Username is too short"}, status=403)
                 if len(new_username) > 16:
                     return Response({"message": "Username is too long"}, status=403)
-                if predict(new_username):
-                    return Response(
-                        {"message": "Username was detected as inappropriate"},
-                        status=403,
-                    )
+                try:
+                    validators.profanity_filter(new_username)
+                except ValidationError as e:
+                    return Response({"message": e.message}, status=403)
 
             if new_phone:
                 customer.phone = new_phone
@@ -361,6 +359,7 @@ class CustomerViewSet(viewsets.ViewSet):
             )
 
         except Exception as e:
+            print(e)
             return Response({"message": "Something went wrong"}, status=400)
 
     def delete(self, request):
@@ -795,14 +794,16 @@ class ReviewViewSet(viewsets.ViewSet):
             product = models.Product.objects.get(id=product_id)
 
             rating = request.data["rating"]
-            title = request.data["title"]
             content = request.data["content"]
+            try:
+                validators.profanity_filter(content)
+            except ValidationError as e:
+                return Response({"message": e.message}, status=403)
 
             new_review = models.Review.objects.create(
                 customer=customer,
                 product=product,
                 rating=rating,
-                title=title,
                 content=content,
             )
 
@@ -822,13 +823,15 @@ class ReviewViewSet(viewsets.ViewSet):
             review = models.Review.objects.get(customer=customer, product=product)
 
             rating = request.data.ger("rating")
-            title = request.data.get("title")
             content = request.data.get("content")
+
+            try:
+                validators.profanity_filter(content)
+            except ValidationError as e:
+                return Response({"message": e.message}, status=403)
 
             if rating:
                 review.rating = rating
-            if title:
-                review.title = title
             if content:
                 review.content = content
 

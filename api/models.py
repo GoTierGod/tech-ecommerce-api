@@ -6,6 +6,7 @@ from django.core.validators import (
     MinLengthValidator,
 )
 from django.core.exceptions import ValidationError
+from . import validators
 
 
 # Models
@@ -30,11 +31,12 @@ class Brand(models.Model):
 
 class Customer(models.Model):
     birthdate = models.DateField()
-    GENDERS = (("M", "Male"), ("F", "Female"), ("0", "Other"))
+    GENDERS = (("M", "Male"), ("F", "Female"))
     gender = models.CharField(
         max_length=10,
         choices=GENDERS,
-        default=GENDERS[2][0],
+        null=True,
+        default=None,
     )
     phone = models.CharField(max_length=45)
     country = models.CharField(max_length=45)
@@ -51,8 +53,13 @@ class Customer(models.Model):
 
 class DeliveryMan(models.Model):
     birthdate = models.DateField()
-    GENDERS = (("M", "Male"), ("F", "Female"), ("0", "Other"))
-    gender = models.CharField(max_length=10, choices=GENDERS, default=GENDERS[2][0])
+    GENDERS = (("M", "Male"), ("F", "Female"))
+    gender = models.CharField(
+        max_length=10,
+        choices=GENDERS,
+        null=True,
+        default=None,
+    )
     phone = models.CharField(max_length=45)
     country = models.CharField(max_length=45)
     city = models.CharField(max_length=45)
@@ -127,10 +134,14 @@ class ProductImage(models.Model):
 
 
 class Review(models.Model):
-    rating = models.FloatField(validators=[MinValueValidator(0), MaxValueValidator(5)])
-    title = models.CharField(max_length=45)
+    rating = models.FloatField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     content = models.CharField(
-        max_length=500, default="", validators=[MinLengthValidator(0)]
+        default="",
+        validators=[
+            MinLengthValidator(10),
+            MaxValueValidator(45),
+            validators.profanity_filter,
+        ],
     )
     date = models.DateField(auto_now_add=True, editable=False)
     is_useful = models.BooleanField(default=False)
