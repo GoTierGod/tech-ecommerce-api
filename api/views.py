@@ -380,6 +380,30 @@ class CustomerViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong"}, status=400)
 
+    def list(self, request):
+        try:
+            user = request.user
+            customer = models.Customer.objects.get(user=user)
+
+            likes = [
+                review.id
+                for review in models.ReviewLike.objects.filter(customer=customer)
+            ]
+            dislikes = [
+                review.id
+                for review in models.ReviewDislike.objects.filter(customer=customer)
+            ]
+            reports = [
+                review.id
+                for review in models.ReviewReport.objects.filter(customer=customer)
+            ]
+
+            return Response(
+                {"likes": likes, "dislikes": dislikes, "reports": reports}, status=200
+            )
+        except Exception as e:
+            return Response({"message": "Something went wrong"}, status=400)
+
     def calculate_age(self, birthdate):
         today = datetime.now().date()
         age = (
