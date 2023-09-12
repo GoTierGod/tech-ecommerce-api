@@ -817,7 +817,7 @@ class ReviewViewSet(viewsets.ViewSet):
     def list(self, request, product_id):
         try:
             product = models.Product.objects.get(id=product_id)
-            reviews = models.Review.objects.filter(product=product)
+            reviews = models.Review.objects.filter(product=product, hidden=False)
 
             serialized_reviews_data = [
                 utils.compose_review(review) for review in reviews

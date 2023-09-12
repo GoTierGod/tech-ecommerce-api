@@ -4,6 +4,7 @@ from django.core.validators import (
     MinValueValidator,
     MaxValueValidator,
     MinLengthValidator,
+    MaxLengthValidator,
 )
 from django.core.exceptions import ValidationError
 from . import validators
@@ -138,7 +139,7 @@ class Review(models.Model):
         default="",
         validators=[
             MinLengthValidator(10),
-            MaxValueValidator(45),
+            MaxLengthValidator(45),
             validators.profanity_filter,
         ],
     )
