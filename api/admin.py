@@ -14,7 +14,7 @@ class Category(admin.ModelAdmin):
 
 @admin.register(models.Brand)
 class Brand(admin.ModelAdmin):
-    list_display = ("id", "name", "website_url")
+    list_display = ("id", "name")
     list_display_links = ("name",)
 
 
@@ -62,7 +62,7 @@ class ProductSpecification(admin.ModelAdmin):
 
 @admin.register(models.ProductImage)
 class ProductImage(admin.ModelAdmin):
-    list_display = ("id", "product", "description", "is_default")
+    list_display = ("id", "product", "is_default")
     list_display_links = ("product",)
 
 

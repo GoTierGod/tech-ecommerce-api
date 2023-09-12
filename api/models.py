@@ -48,7 +48,7 @@ class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
-        return f"{self.user.username} ({self.user.first_name} {self.user.last_name})"
+        return self.user.username
 
 
 class DeliveryMan(models.Model):
@@ -71,7 +71,7 @@ class DeliveryMan(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
-        return f"{self.user.username} ({self.user.first_name} {self.user.last_name})"
+        return self.user.username
 
 
 class Product(models.Model):
@@ -115,7 +115,7 @@ class ProductImage(models.Model):
     is_default = models.BooleanField(default=False)
 
     def __str__(self) -> str:
-        return self.description
+        return self.product.name
 
     def save(self, *args, **kwargs):
         if self.is_default:
@@ -149,7 +149,7 @@ class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
-        return f"{self.customer.user.first_name} - {self.product.name}"
+        return f"({self.rating}) {self.content}"
 
     def clean(self) -> None:
         super().clean()
@@ -204,7 +204,7 @@ class Order(models.Model):
     )
 
     def __str__(self) -> str:
-        return f"{self.pk} - {self.paid} - {self.dispatched} - {self.on_the_way} - {self.delivered} - {self.delivery_man}"
+        return self.customer.user.username
 
     def clean(self) -> None:
         super().clean()
@@ -226,7 +226,7 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True)
 
     def __str__(self) -> str:
-        return f"{self.product.name} - {self.customer.user.username}"
+        return self.product.name
 
     def save(self, *args, **kwargs):
         self.total_cost = self.product.offer_price * self.quantity
@@ -239,7 +239,7 @@ class CartItem(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
-        return f"{self.customer.user.username} - {self.product.name}"
+        return self.product.name
 
     def clean(self) -> None:
         super().clean()
@@ -258,7 +258,7 @@ class FavItem(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
-        return f"{self.customer.user.username} - {self.product.name}"
+        return self.product.name
 
     def clean(self) -> None:
         super().clean()
@@ -280,4 +280,4 @@ class Coupon(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
 
     def __str__(self) -> str:
-        return f"{self.amount} {self.customer.user.username}"
+        return f"({self.amount}) {self.customer.user.username}"
