@@ -5,8 +5,9 @@ from django.core.paginator import Paginator
 
 # REST Framework
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework import status
 from rest_framework import viewsets
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 
 # App
@@ -14,10 +15,6 @@ from . import serializers
 from . import models
 from . import utils
 from . import validators
-
-# Utils
-from distutils.util import strtobool
-from datetime import datetime, timedelta
 
 # Caching
 from django.utils.decorators import method_decorator
@@ -27,6 +24,9 @@ from django.views.decorators.cache import cache_page
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+
+# Other
+from datetime import datetime, timedelta
 
 
 @permission_classes([IsAuthenticated, IsAdminUser])
@@ -63,7 +63,7 @@ def routes(request):
         "reviews/delete/<int:id>",
     ]
 
-    return Response(routes, status=200)
+    return Response(routes, status=status.HTTP_200_OK)
 
 
 class ProductViewSet(viewsets.ViewSet):
@@ -81,10 +81,12 @@ class ProductViewSet(viewsets.ViewSet):
 
             serialized_products_data = [utils.compose_product(p) for p in page_queryset]
 
-            return Response(serialized_products_data, status=200)
+            return Response(serialized_products_data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     @method_decorator(cache_page(60 * 60))
     def retrieve(self, request, product_id):
@@ -108,7 +110,7 @@ class BrandViewSet(viewsets.ViewSet):
         brands = models.Brand.objects.all()
         serialized_brands = serializers.BrandSerializer(brands, many=True)
 
-        return Response(serialized_brands.data, status=200)
+        return Response(serialized_brands.data, status=status.HTTP_200_OK)
 
 
 class CategoryViewSet(viewsets.ViewSet):
@@ -117,7 +119,7 @@ class CategoryViewSet(viewsets.ViewSet):
         categories = models.Category.objects.all()
         serialized_categories = serializers.CategorySerializer(categories, many=True)
 
-        return Response(serialized_categories.data, status=200)
+        return Response(serialized_categories.data, status=status.HTTP_200_OK)
 
 
 class BestSellersViewSet(viewsets.ViewSet):
@@ -146,10 +148,12 @@ class BestSellersViewSet(viewsets.ViewSet):
 
             serialized_products_data = [utils.compose_product(p) for p in page_queryset]
 
-            return Response(serialized_products_data, status=200)
+            return Response(serialized_products_data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class SearchViewSet(viewsets.ViewSet):
@@ -201,11 +205,13 @@ class SearchViewSet(viewsets.ViewSet):
                     "brands": serialized_brands.data,
                     "installments": installments,
                 },
-                status=200,
+                status=status.HTTP_200_OK,
             )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class CustomerViewSet(viewsets.ViewSet):
@@ -223,10 +229,12 @@ class CustomerViewSet(viewsets.ViewSet):
 
             serialized_customer = serializers.CustomerSerializer(customer)
 
-            return Response(serialized_customer.data, status=200)
+            return Response(serialized_customer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def create(self, request):
         try:
@@ -236,19 +244,26 @@ class CustomerViewSet(viewsets.ViewSet):
             birthdate = request.data["birthdate"]
 
             if len(username) < 8:
-                return Response({"message": "Username is too short."}, status=400)
+                return Response(
+                    {"message": "Username is too short."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             if len(username) > 16:
-                return Response({"message": "Username is too long."}, status=400)
+                return Response(
+                    {"message": "Username is too long."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             try:
                 validators.profanity_filter(username)
             except ValidationError as e:
                 return Response(
-                    {"message": "Username was detected as inappropriate."}, status=422
+                    {"message": "Username was detected as inappropriate."},
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 )
             if models.User.objects.filter(username=username).exists():
                 return Response(
                     {"message": f'Username "{username}" is already in use.'},
-                    status=409,
+                    status=status.HTTP_409_CONFLICT,
                 )
 
             try:
@@ -258,7 +273,7 @@ class CustomerViewSet(viewsets.ViewSet):
             if models.User.objects.filter(email=email).exists():
                 return Response(
                     {"message": f'Email "{email}" is already in use.'},
-                    status=409,
+                    status=status.HTTP_409_CONFLICT,
                 )
 
             try:
@@ -270,7 +285,7 @@ class CustomerViewSet(viewsets.ViewSet):
             if self.calculate_age(birthdate_date) < 18:
                 return Response(
                     {"message": "You must be at least 18 years old to register."},
-                    status=403,
+                    status=status.HTTP_403_FORBIDDEN,
                 )
 
             new_user = models.User.objects.create_user(
@@ -283,10 +298,15 @@ class CustomerViewSet(viewsets.ViewSet):
             new_user.save()
             new_customer.save()
 
-            return Response({"message": "Account created successfully."}, status=201)
+            return Response(
+                {"message": "Account created successfully."},
+                status=status.HTTP_201_CREATED,
+            )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def update(self, request):
         try:
@@ -311,42 +331,60 @@ class CustomerViewSet(viewsets.ViewSet):
                     if models.User.objects.filter(email=new_email).exists():
                         return Response(
                             {"message": f'Email "{new_email}" is already in use.'},
-                            status=409,
+                            status=status.HTTP_409_CONFLICT,
                         )
                     try:
                         validate_email(new_email)
                     except ValidationError as e:
-                        return Response({"message": str(e).capitalize()}, status=400)
+                        return Response(
+                            {"message": str(e).capitalize()},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
                     user.email = new_email
                 else:
-                    return Response({"message": "Incorrect password."}, status=401)
+                    return Response(
+                        {"message": "Incorrect password."},
+                        status=status.HTTP_401_UNAUTHORIZED,
+                    )
 
             if new_password:
                 if customer.user.check_password(password):
                     try:
                         validate_password(new_password)
                     except ValidationError as e:
-                        return Response({"message": str(e).capitalize()}, status=400)
+                        return Response(
+                            {"message": str(e).capitalize()},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
                     user.password = new_password
                 else:
-                    return Response({"message": "Incorrect password."}, status=401)
+                    return Response(
+                        {"message": "Incorrect password."},
+                        status=status.HTTP_401_UNAUTHORIZED,
+                    )
 
             if new_username:
                 if len(new_username) < 8:
-                    return Response({"message": "Username is too short."}, status=400)
+                    return Response(
+                        {"message": "Username is too short."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
                 if len(new_username) > 16:
-                    return Response({"message": "Username is too long."}, status=400)
+                    return Response(
+                        {"message": "Username is too long."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
                 try:
                     validators.profanity_filter(new_username)
                 except ValidationError as e:
                     return Response(
                         {"message": "Username was detected as inappropriate."},
-                        status=422,
+                        status=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     )
                 if models.User.objects.filter(username=new_username).exists():
                     return Response(
                         {"message": f'Username "{new_username}" is already in use.'},
-                        status=409,
+                        status=status.HTTP_409_CONFLICT,
                     )
                 else:
                     user.username = new_username
@@ -372,11 +410,14 @@ class CustomerViewSet(viewsets.ViewSet):
             user.save()
 
             return Response(
-                {"message": "Account information successfully updated."}, status=200
+                {"message": "Account information successfully updated."},
+                status=status.HTTP_200_OK,
             )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def delete(self, request):
         try:
@@ -386,15 +427,22 @@ class CustomerViewSet(viewsets.ViewSet):
             password = request.data["password"]
 
             if not customer.user.check_password(password):
-                return Response({"message": "Incorrect password."}, status=401)
+                return Response(
+                    {"message": "Incorrect password."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
 
             customer.delete()
             user.delete()
 
-            return Response({"message": "Account successfully deleted."}, status=200)
+            return Response(
+                {"message": "Account successfully deleted."}, status=status.HTTP_200_OK
+            )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def list(self, request):
         try:
@@ -415,10 +463,13 @@ class CustomerViewSet(viewsets.ViewSet):
             ]
 
             return Response(
-                {"likes": likes, "dislikes": dislikes, "reports": reports}, status=200
+                {"likes": likes, "dislikes": dislikes, "reports": reports},
+                status=status.HTTP_200_OK,
             )
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def calculate_age(self, birthdate):
         today = datetime.now().date()
@@ -441,7 +492,7 @@ class CardItemViewSet(viewsets.ViewSet):
             utils.compose_product(cart_item.product) for cart_item in cart_items
         ]
 
-        return Response(serialized_products_data, status=200)
+        return Response(serialized_products_data, status=status.HTTP_200_OK)
 
     def create(self, request, product_id):
         try:
@@ -454,7 +505,7 @@ class CardItemViewSet(viewsets.ViewSet):
             if current_cart_items >= 10:
                 return Response(
                     {"message": "You cannot add more than 10 products to your cart."},
-                    status=403,
+                    status=status.HTTP_403_FORBIDDEN,
                 )
 
             product = models.Product.objects.get(id=product_id)
@@ -466,11 +517,14 @@ class CardItemViewSet(viewsets.ViewSet):
             new_cart_item.save()
 
             return Response(
-                {"message": "The product was added to your cart."}, status=200
+                {"message": "The product was added to your cart."},
+                status=status.HTTP_200_OK,
             )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def delete(self, request, product_id):
         try:
@@ -486,11 +540,14 @@ class CardItemViewSet(viewsets.ViewSet):
             new_cart_item.delete()
 
             return Response(
-                {"message": "The product was removed from your cart."}, status=200
+                {"message": "The product was removed from your cart."},
+                status=status.HTTP_200_OK,
             )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def update(self, request, product_id):
         try:
@@ -503,7 +560,7 @@ class CardItemViewSet(viewsets.ViewSet):
                     {
                         "message": "You cannot add more than 25 products to your favorites."
                     },
-                    status=403,
+                    status=status.HTTP_403_FORBIDDEN,
                 )
 
             product = models.Product.objects.get(id=product_id)
@@ -521,11 +578,14 @@ class CardItemViewSet(viewsets.ViewSet):
             prev_cart_item.delete()
 
             return Response(
-                {"message": "The product was moved to your favorites."}, status=200
+                {"message": "The product was moved to your favorites."},
+                status=status.HTTP_200_OK,
             )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class FavItemViewSet(viewsets.ViewSet):
@@ -540,7 +600,7 @@ class FavItemViewSet(viewsets.ViewSet):
             utils.compose_product(fav_item.product) for fav_item in fav_items
         ]
 
-        return Response(serialized_products_data, status=200)
+        return Response(serialized_products_data, status=status.HTTP_200_OK)
 
     def create(self, request, product_id):
         try:
@@ -553,7 +613,7 @@ class FavItemViewSet(viewsets.ViewSet):
                     {
                         "message": "You cannot add more than 25 products to your favorites."
                     },
-                    status=403,
+                    status=status.HTTP_403_FORBIDDEN,
                 )
 
             product = models.Product.objects.get(id=product_id)
@@ -565,11 +625,14 @@ class FavItemViewSet(viewsets.ViewSet):
             new_fav_item.save()
 
             return Response(
-                {"message": "The product was added to your favorites."}, status=200
+                {"message": "The product was added to your favorites."},
+                status=status.HTTP_200_OK,
             )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def delete(self, request, product_ids=None):
         try:
@@ -585,11 +648,14 @@ class FavItemViewSet(viewsets.ViewSet):
             fav_items.delete()
 
             return Response(
-                {"message": "The product was removed from your favorites."}, status=200
+                {"message": "The product was removed from your favorites."},
+                status=status.HTTP_200_OK,
             )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def update(self, request, product_id):
         try:
@@ -603,7 +669,7 @@ class FavItemViewSet(viewsets.ViewSet):
             if current_cart_items >= 10:
                 return Response(
                     {"message": "You cannot add more than 10 products to your cart."},
-                    status=403,
+                    status=status.HTTP_403_FORBIDDEN,
                 )
 
             product = models.Product.objects.get(id=product_id)
@@ -621,11 +687,14 @@ class FavItemViewSet(viewsets.ViewSet):
             prev_fav_item.delete()
 
             return Response(
-                {"message": "The product was moved to your cart"}, status=200
+                {"message": "The product was moved to your cart"},
+                status=status.HTTP_200_OK,
             )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class PurchaseViewSet(viewsets.ViewSet):
@@ -697,10 +766,14 @@ class PurchaseViewSet(viewsets.ViewSet):
             if coupon:
                 coupon.delete()
 
-            return Response({"message": "Order created successfully."}, status=200)
+            return Response(
+                {"message": "Order created successfully."}, status=status.HTTP_200_OK
+            )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def list(self, request):
         try:
@@ -709,7 +782,7 @@ class PurchaseViewSet(viewsets.ViewSet):
 
             order = models.Order.objects.filter(customer=customer)
             if not order.exists():
-                return Response([], status=200)
+                return Response([], status=status.HTTP_200_OK)
             else:
                 order = order[0]
 
@@ -719,10 +792,12 @@ class PurchaseViewSet(viewsets.ViewSet):
                 utils.compose_purchase(order_item) for order_item in order_items
             ]
 
-            return Response(serialized_purchases_data, status=200)
+            return Response(serialized_purchases_data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def retrieve(self, request, order_item_id):
         try:
@@ -731,7 +806,12 @@ class PurchaseViewSet(viewsets.ViewSet):
             customer = models.Customer.objects.get(user=user)
             orders = models.Order.objects.filter(customer=customer)
             if not orders.exists():
-                return Response([], status=200)
+                return Response(
+                    {
+                        "message": f'The order item with ID "{order_item_id}" does not exists.'
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
             order_item = models.OrderItem.objects.filter(
                 id=order_item_id, order__in=orders
@@ -742,17 +822,19 @@ class PurchaseViewSet(viewsets.ViewSet):
                     {
                         "message": f'The order item with ID "{order_item_id}" does not exists.'
                     },
-                    status=404,
+                    status=status.HTTP_404_NOT_FOUND,
                 )
             else:
                 order_item = order_item[0]
 
             serialized_purchase_data = utils.compose_purchase(order_item)
 
-            return Response(serialized_purchase_data, status=200)
+            return Response(serialized_purchase_data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def update(self, request, order_id):
         try:
@@ -763,7 +845,7 @@ class PurchaseViewSet(viewsets.ViewSet):
             if not order.exists():
                 return Response(
                     {"message": f'The order with ID "{order_id}" does not exists.'},
-                    status=404,
+                    status=status.HTTP_404_NOT_FOUND,
                 )
             else:
                 order = order[0]
@@ -771,7 +853,7 @@ class PurchaseViewSet(viewsets.ViewSet):
             if order.on_the_way:
                 return Response(
                     {"message": "Order on the way, information cannot be modified."},
-                    status=403,
+                    status=status.HTTP_403_FORBIDDEN,
                 )
 
             country = request.data.get("country")
@@ -790,10 +872,14 @@ class PurchaseViewSet(viewsets.ViewSet):
 
             order.save()
 
-            return Response({"message": "Order updated successfully."}, status=200)
+            return Response(
+                {"message": "Order updated successfully."}, status=status.HTTP_200_OK
+            )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def delete(self, request, order_id):
         try:
@@ -806,7 +892,9 @@ class PurchaseViewSet(viewsets.ViewSet):
             )
 
             if not order_items.exists():
-                return Response("Something went wrong.", status=400)
+                return Response(
+                    "Something went wrong.", status=status.HTTP_400_BAD_REQUEST
+                )
 
             if order.dispatched:
                 return Response(
@@ -817,10 +905,12 @@ class PurchaseViewSet(viewsets.ViewSet):
             order.delete()
             order_items.delete()
 
-            return Response({"message": "Order successfully canceled."}, status=200)
+            return Response(
+                {"message": "Order successfully canceled."}, status=status.HTTP_200_OK
+            )
 
         except Exception as e:
-            return Response("Something went wrong.", status=400)
+            return Response("Something went wrong.", status=status.HTTP_400_BAD_REQUEST)
 
 
 class ReviewViewSet(viewsets.ViewSet):
@@ -841,10 +931,12 @@ class ReviewViewSet(viewsets.ViewSet):
                 utils.compose_review(review) for review in reviews
             ]
 
-            return Response(serialized_reviews_data, status=200)
+            return Response(serialized_reviews_data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def create(self, request, product_id):
         try:
@@ -858,7 +950,8 @@ class ReviewViewSet(viewsets.ViewSet):
                 validators.profanity_filter(content)
             except ValidationError as e:
                 return Response(
-                    {"message": "Content was detected as inappropriate."}, status=422
+                    {"message": "Content was detected as inappropriate."},
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 )
 
             new_review = models.Review.objects.create(
@@ -870,10 +963,14 @@ class ReviewViewSet(viewsets.ViewSet):
 
             new_review.save()
 
-            return Response({"message": "Review created successfully."}, status=200)
+            return Response(
+                {"message": "Review created successfully."}, status=status.HTTP_200_OK
+            )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def update(self, request, product_id):
         try:
@@ -890,7 +987,8 @@ class ReviewViewSet(viewsets.ViewSet):
                 validators.profanity_filter(content)
             except ValidationError as e:
                 return Response(
-                    {"message": "Content was detected as inappropriate."}, status=422
+                    {"message": "Content was detected as inappropriate."},
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 )
 
             if rating:
@@ -900,10 +998,14 @@ class ReviewViewSet(viewsets.ViewSet):
 
             review.save()
 
-            return Response({"message": "Review sucessfully updated."}, status=200)
+            return Response(
+                {"message": "Review sucessfully updated."}, status=status.HTTP_200_OK
+            )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def delete(self, request, product_id):
         try:
@@ -914,10 +1016,14 @@ class ReviewViewSet(viewsets.ViewSet):
             review = models.Review.objects.get(customer=customer, product=product)
 
             review.delete()
-            return Response({"message": "Review successfully deleted."}, status=200)
+            return Response(
+                {"message": "Review successfully deleted."}, status=status.HTTP_200_OK
+            )
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def like(self, request, review_id):
         try:
@@ -930,7 +1036,9 @@ class ReviewViewSet(viewsets.ViewSet):
             )
             if existing_like.exists():
                 existing_like[0].delete()
-                return Response({"message": "Like successfully removed."}, status=200)
+                return Response(
+                    {"message": "Like successfully removed."}, status=status.HTTP_200_OK
+                )
 
             existing_dislike = models.ReviewDislike.objects.filter(
                 review=review, customer=customer
@@ -940,10 +1048,12 @@ class ReviewViewSet(viewsets.ViewSet):
 
             models.ReviewLike.objects.create(review=review, customer=customer).save()
 
-            return Response({"message": "Liked."}, status=200)
+            return Response({"message": "Liked."}, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def dislike(self, request, review_id):
         try:
@@ -957,7 +1067,8 @@ class ReviewViewSet(viewsets.ViewSet):
             if existing_dislike.exists():
                 existing_dislike[0].delete()
                 return Response(
-                    {"message": "Dislike successfully removed."}, status=200
+                    {"message": "Dislike successfully removed."},
+                    status=status.HTTP_200_OK,
                 )
 
             existing_like = models.ReviewLike.objects.filter(
@@ -968,10 +1079,12 @@ class ReviewViewSet(viewsets.ViewSet):
 
             models.ReviewDislike.objects.create(review=review, customer=customer).save()
 
-            return Response({"message": "Disliked."}, status=200)
+            return Response({"message": "Disliked."}, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def report(self, request, review_id):
         try:
@@ -982,14 +1095,18 @@ class ReviewViewSet(viewsets.ViewSet):
             if models.ReviewReport.objects.filter(
                 review=review, customer=customer
             ).exists():
-                return Response({"message": "Already reported."}, status=403)
+                return Response(
+                    {"message": "Already reported."}, status=status.HTTP_403_FORBIDDEN
+                )
 
             models.ReviewReport.objects.create(review=review, customer=customer).save()
 
-            return Response({"message": "Reported."}, status=200)
+            return Response({"message": "Reported."}, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class CouponViewSet(viewsets.ViewSet):
@@ -1004,6 +1121,8 @@ class CouponViewSet(viewsets.ViewSet):
             coupons = models.Coupon.objects.filter(customer=customer)
             serialized_coupons = serializers.CouponSerializer(coupons, many=True)
 
-            return Response(serialized_coupons.data, status=200)
+            return Response(serialized_coupons.data, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({"message": "Something went wrong."}, status=400)
+            return Response(
+                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
+            )
