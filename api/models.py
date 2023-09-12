@@ -195,7 +195,7 @@ class Order(models.Model):
     country = models.CharField(max_length=45)
     city = models.CharField(max_length=45)
     address = models.CharField(max_length=1000)
-    notes = models.CharField(max_length=255, default="")
+    notes = models.CharField(max_length=255, default="Nothing")
     customer = models.ForeignKey(
         Customer, on_delete=models.SET_NULL, default=None, null=True
     )
