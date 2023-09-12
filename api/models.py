@@ -200,7 +200,7 @@ class Order(models.Model):
         Customer, on_delete=models.SET_NULL, default=None, null=True
     )
     delivery_man = models.ForeignKey(
-        DeliveryMan, on_delete=models.SET_NULL, default=None, null=True
+        DeliveryMan, on_delete=models.SET_NULL, default=None, null=True, blank=True
     )
 
     def __str__(self) -> str:
