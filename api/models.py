@@ -77,7 +77,6 @@ class DeliveryMan(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=4000)
-    color = models.CharField(max_length=45)
     price = models.DecimalField(
         max_digits=8, decimal_places=2, validators=[MinValueValidator(0)]
     )
