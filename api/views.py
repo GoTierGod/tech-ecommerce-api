@@ -1,20 +1,31 @@
+# Django
+from django.db.models import Count, Q, Sum
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.paginator import Paginator
+
+# REST Framework
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from django.db.models import Count, Q, Sum
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.paginator import Paginator
+
+# App
 from . import serializers
 from . import models
 from . import utils
 from . import validators
+
+# Utils
 from distutils.util import strtobool
 from datetime import datetime, timedelta
 
+# Caching
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
+# Validation
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-
 from django.core.validators import validate_email
 
 
@@ -56,6 +67,7 @@ def routes(request):
 
 
 class ProductViewSet(viewsets.ViewSet):
+    @method_decorator(cache_page(60 * 60))
     def list(self, request):
         try:
             page = request.query_params.get("page")
@@ -74,6 +86,7 @@ class ProductViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"message": "Something went wrong."}, status=400)
 
+    @method_decorator(cache_page(60 * 60))
     def retrieve(self, request, product_id):
         try:
             product = models.Product.objects.get(id=product_id)
@@ -90,6 +103,7 @@ class ProductViewSet(viewsets.ViewSet):
 
 
 class BrandViewSet(viewsets.ViewSet):
+    @method_decorator(cache_page(60 * 60 * 24))
     def list(self, request):
         brands = models.Brand.objects.all()
         serialized_brands = serializers.BrandSerializer(brands, many=True)
@@ -98,6 +112,7 @@ class BrandViewSet(viewsets.ViewSet):
 
 
 class CategoryViewSet(viewsets.ViewSet):
+    @method_decorator(cache_page(60 * 60 * 24))
     def list(self, request):
         categories = models.Category.objects.all()
         serialized_categories = serializers.CategorySerializer(categories, many=True)
@@ -106,6 +121,7 @@ class CategoryViewSet(viewsets.ViewSet):
 
 
 class BestSellersViewSet(viewsets.ViewSet):
+    @method_decorator(cache_page(60 * 60))
     def list(self, request, category=None):
         try:
             products = models.Product.objects.all()
@@ -137,6 +153,7 @@ class BestSellersViewSet(viewsets.ViewSet):
 
 
 class SearchViewSet(viewsets.ViewSet):
+    @method_decorator(cache_page(60 * 60 * 1))
     def list(self, request, search):
         try:
             page = request.query_params.get("page")
@@ -814,6 +831,7 @@ class ReviewViewSet(viewsets.ViewSet):
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
+    @method_decorator(cache_page(60 * 60))
     def list(self, request, product_id):
         try:
             product = models.Product.objects.get(id=product_id)
@@ -977,6 +995,7 @@ class ReviewViewSet(viewsets.ViewSet):
 class CouponViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
+    @method_decorator(cache_page(60))
     def list(self, request):
         try:
             user = request.user
