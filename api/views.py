@@ -209,7 +209,7 @@ class CustomerViewSet(viewsets.ViewSet):
             return Response(serialized_customer.data, status=200)
 
         except Exception as e:
-            return Response({"message": "Something went wrong"}, status=400)
+            return Response({"message": "Something went wrong."}, status=400)
 
     def create(self, request):
         try:
@@ -218,40 +218,43 @@ class CustomerViewSet(viewsets.ViewSet):
             password = request.data["password"]
             birthdate = request.data["birthdate"]
 
+            if len(username) < 8:
+                return Response({"message": "Username is too short."}, status=400)
+            if len(username) > 16:
+                return Response({"message": "Username is too long."}, status=400)
             try:
-                if models.User.objects.filter(username=username).exists():
-                    return Response(
-                        {
-                            "message": f'A user with username "{username}" already exists'
-                        },
-                        status=409,
-                    )
-                if len(username) < 8:
-                    return Response({"message": "Username is too short"}, status=403)
-                if len(username) > 16:
-                    return Response({"message": "Username is too long"}, status=403)
-                try:
-                    validators.profanity_filter(username)
-                except ValidationError as e:
-                    return Response({"message": e.message}, status=403)
-
-                validate_email(email)
-                if models.User.objects.filter(email=email).exists():
-                    return Response(
-                        {"message": f'The email "{email}" is already being used'},
-                        status=409,
-                    )
-
-                validate_password(password)
-
-                birthdate_date = datetime.strptime(birthdate, "%Y-%m-%d").date()
-                if self.calculate_age(birthdate_date) < 18:
-                    return Response(
-                        {"message": "You must be at least 18 years old to register"},
-                        status=403,
-                    )
+                validators.profanity_filter(username)
             except ValidationError as e:
-                return Response({"message": e.message}, status=403)
+                return Response(
+                    {"message": "Username was detected as inappropriate."}, status=422
+                )
+            if models.User.objects.filter(username=username).exists():
+                return Response(
+                    {"message": f'Username "{username}" is already in use.'},
+                    status=409,
+                )
+
+            try:
+                validate_email(email)
+            except ValidationError as e:
+                return Response({"message": str(e).capitalize()}, status=400)
+            if models.User.objects.filter(email=email).exists():
+                return Response(
+                    {"message": f'Email "{email}" is already in use.'},
+                    status=409,
+                )
+
+            try:
+                validate_password(password)
+            except ValidationError as e:
+                return Response({"message": str(e).capitalize()}, status=400)
+
+            birthdate_date = datetime.strptime(birthdate, "%Y-%m-%d").date()
+            if self.calculate_age(birthdate_date) < 18:
+                return Response(
+                    {"message": "You must be at least 18 years old to register."},
+                    status=403,
+                )
 
             new_user = models.User.objects.create_user(
                 username=username, email=email, password=password
@@ -263,12 +266,10 @@ class CustomerViewSet(viewsets.ViewSet):
             new_user.save()
             new_customer.save()
 
-            return Response(
-                {"message": "The customer was successfully created"}, status=201
-            )
+            return Response({"message": "Account created successfully."}, status=201)
 
         except Exception as e:
-            return Response({"message": "Something went wrong"}, status=400)
+            return Response({"message": "Something went wrong."}, status=400)
 
     def update(self, request):
         try:
@@ -290,49 +291,48 @@ class CustomerViewSet(viewsets.ViewSet):
 
             if new_email:
                 if customer.user.check_password(password):
+                    if models.User.objects.filter(email=new_email).exists():
+                        return Response(
+                            {"message": f'Email "{new_email}" is already in use.'},
+                            status=409,
+                        )
                     try:
-                        if models.User.objects.filter(email=new_email).exists():
-                            return Response(
-                                {
-                                    "message": f'The email "{new_email}" is already being used'
-                                },
-                                status=409,
-                            )
                         validate_email(new_email)
-                        user.email = new_email
                     except ValidationError as e:
-                        return Response({"message": e.message}, status=403)
+                        return Response({"message": str(e).capitalize()}, status=400)
+                    user.email = new_email
                 else:
-                    return Response({"message": "Incorrect password"}, status=401)
+                    return Response({"message": "Incorrect password."}, status=401)
 
             if new_password:
                 if customer.user.check_password(password):
                     try:
                         validate_password(new_password)
-                        user.password = new_password
                     except ValidationError as e:
-                        return Response({"message": e.message}, status=403)
+                        return Response({"message": str(e).capitalize()}, status=400)
+                    user.password = new_password
                 else:
-                    return Response({"message": "Incorrect password"}, status=401)
+                    return Response({"message": "Incorrect password."}, status=401)
 
             if new_username:
+                if len(new_username) < 8:
+                    return Response({"message": "Username is too short."}, status=400)
+                if len(new_username) > 16:
+                    return Response({"message": "Username is too long."}, status=400)
+                try:
+                    validators.profanity_filter(new_username)
+                except ValidationError as e:
+                    return Response(
+                        {"message": "Username was detected as inappropriate."},
+                        status=422,
+                    )
                 if models.User.objects.filter(username=new_username).exists():
                     return Response(
-                        {
-                            "message": f'A user with username "{new_username}" already exists'
-                        },
+                        {"message": f'Username "{new_username}" is already in use.'},
                         status=409,
                     )
                 else:
                     user.username = new_username
-                if len(new_username) < 8:
-                    return Response({"message": "Username is too short"}, status=403)
-                if len(new_username) > 16:
-                    return Response({"message": "Username is too long"}, status=403)
-                try:
-                    validators.profanity_filter(new_username)
-                except ValidationError as e:
-                    return Response({"message": e.message}, status=403)
 
             if new_phone:
                 customer.phone = new_phone
@@ -355,12 +355,11 @@ class CustomerViewSet(viewsets.ViewSet):
             user.save()
 
             return Response(
-                {"message": "The customer info was pdated successfully"}, status=200
+                {"message": "Account information successfully updated."}, status=200
             )
 
         except Exception as e:
-            print(e)
-            return Response({"message": "Something went wrong"}, status=400)
+            return Response({"message": "Something went wrong."}, status=400)
 
     def delete(self, request):
         try:
@@ -370,15 +369,15 @@ class CustomerViewSet(viewsets.ViewSet):
             password = request.data["password"]
 
             if not customer.user.check_password(password):
-                return Response({"message": "Incorrect password"}, status=401)
+                return Response({"message": "Incorrect password."}, status=401)
 
             customer.delete()
             user.delete()
 
-            return Response({"message": "The user was deleted"}, status=200)
+            return Response({"message": "Account successfully deleted."}, status=200)
 
         except Exception as e:
-            return Response({"message": "Something went wrong"}, status=400)
+            return Response({"message": "Something went wrong."}, status=400)
 
     def list(self, request):
         try:
@@ -402,7 +401,7 @@ class CustomerViewSet(viewsets.ViewSet):
                 {"likes": likes, "dislikes": dislikes, "reports": reports}, status=200
             )
         except Exception as e:
-            return Response({"message": "Something went wrong"}, status=400)
+            return Response({"message": "Something went wrong."}, status=400)
 
     def calculate_age(self, birthdate):
         today = datetime.now().date()
