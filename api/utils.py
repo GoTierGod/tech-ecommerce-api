@@ -32,7 +32,7 @@ def compose_purchase(order_item):
         "order_item": serializers.OrderItemSerializer(order_item).data,
         "product": compose_product(order_item.product),
         "is_reviewed": models.Review.objects.filter(
-            product=order_item.product, customer=order_item.customer
+            product=order_item.product, customer=order_item.order.customer
         ).exists(),
     }
 

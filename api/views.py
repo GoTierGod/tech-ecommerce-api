@@ -688,12 +688,15 @@ class PurchaseViewSet(viewsets.ViewSet):
     def list(self, request):
         try:
             user = request.user
-
             customer = models.Customer.objects.get(user=user)
-            order_items = models.OrderItem.objects.filter(customer=customer)
 
-            if not order_items.exists():
+            order = models.Order.objects.filter(customer=customer)
+            if not order.exists():
                 return Response([], status=200)
+            else:
+                order = order[0]
+
+            order_items = models.OrderItem.objects.filter(order=order)
 
             serialized_purchases_data = [
                 utils.compose_purchase(order_item) for order_item in order_items
@@ -709,8 +712,12 @@ class PurchaseViewSet(viewsets.ViewSet):
             user = request.user
 
             customer = models.Customer.objects.get(user=user)
+            orders = models.Order.objects.filter(customer=customer)
+            if not orders.exists():
+                return Response([], status=200)
+
             order_item = models.OrderItem.objects.filter(
-                id=order_item_id, customer=customer
+                id=order_item_id, order__in=orders
             )
 
             if not order_item.exists():
