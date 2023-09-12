@@ -386,16 +386,16 @@ class CustomerViewSet(viewsets.ViewSet):
             customer = models.Customer.objects.get(user=user)
 
             likes = [
-                review.id
-                for review in models.ReviewLike.objects.filter(customer=customer)
+                like.review.id
+                for like in models.ReviewLike.objects.filter(customer=customer)
             ]
             dislikes = [
-                review.id
-                for review in models.ReviewDislike.objects.filter(customer=customer)
+                dislike.review.id
+                for dislike in models.ReviewDislike.objects.filter(customer=customer)
             ]
             reports = [
-                review.id
-                for review in models.ReviewReport.objects.filter(customer=customer)
+                report.review.id
+                for report in models.ReviewReport.objects.filter(customer=customer)
             ]
 
             return Response(
