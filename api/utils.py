@@ -18,9 +18,11 @@ def compose_customer(customer: models.Customer):
         "last_name": customer.user.last_name,
         "birthdate": customer.birthdate,
         "gender": customer.gender,
+        "phone": customer.phone,
         "country": customer.country,
         "city": customer.city,
         "address": customer.address,
+        "points": customer.points,
     }
 
 
