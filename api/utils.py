@@ -11,8 +11,11 @@ from distutils.util import strtobool
 
 def compose_customer(customer: models.Customer):
     return {
+        "id": customer.pk,
         "username": customer.user.username,
         "email": customer.user.email,
+        "first_name": customer.user.first_name,
+        "last_name": customer.user.last_name,
         "birthdate": customer.birthdate,
         "gender": customer.gender,
         "country": customer.country,
