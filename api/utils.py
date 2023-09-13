@@ -1,5 +1,7 @@
 from rest_framework.response import Response
 from django.db.models import Avg, Count, Sum
+from rest_framework.request import Request
+from django.db.models.manager import BaseManager
 
 from . import serializers
 from . import models
@@ -7,7 +9,7 @@ from . import models
 from distutils.util import strtobool
 
 
-def compose_product(product):
+def compose_product(product: models.Product):
     return {
         "details": serializers.ProductSerializer(product).data,
         "default_img": serializers.ProductImageSerializer(
@@ -26,7 +28,7 @@ def compose_product(product):
     }
 
 
-def compose_purchase(order_item):
+def compose_purchase(order_item: models.OrderItem):
     return {
         "order": serializers.OrderSerializer(order_item.order).data,
         "order_item": serializers.OrderItemSerializer(order_item).data,
@@ -37,7 +39,7 @@ def compose_purchase(order_item):
     }
 
 
-def compose_review(review):
+def compose_review(review: models.Review):
     return {
         "review": serializers.ReviewSerializer(review).data,
         "likes": models.ReviewLike.objects.filter(review=review).count(),
@@ -45,7 +47,7 @@ def compose_review(review):
     }
 
 
-def filter_products(products, request):
+def filter_products(products: BaseManager[models.Product], request: Request):
     category = request.query_params.get("category")
     brand = request.query_params.get("brand")
     is_gamer = request.query_params.get("is_gamer")
@@ -69,7 +71,7 @@ def filter_products(products, request):
     return products
 
 
-def is_best_seller(product):
+def is_best_seller(product: models.Product):
     products = models.Product.objects.all()
 
     best_sellers = (
