@@ -222,14 +222,15 @@ class CustomerViewSet(viewsets.ViewSet):
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
+    @method_decorator(cache_page(60))
     def retrieve(self, request):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
 
-            serialized_customer = serializers.CustomerSerializer(customer)
+            serialized_customer_data = utils.compose_customer(customer)
 
-            return Response(serialized_customer.data, status=status.HTTP_200_OK)
+            return Response(serialized_customer_data, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response(

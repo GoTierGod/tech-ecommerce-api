@@ -9,6 +9,18 @@ from . import models
 from distutils.util import strtobool
 
 
+def compose_customer(customer: models.Customer):
+    return {
+        "username": customer.user.username,
+        "email": customer.user.email,
+        "birthdate": customer.birthdate,
+        "gender": customer.gender,
+        "country": customer.country,
+        "city": customer.city,
+        "address": customer.address,
+    }
+
+
 def compose_product(product: models.Product):
     return {
         "details": serializers.ProductSerializer(product).data,
