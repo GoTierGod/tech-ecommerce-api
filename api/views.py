@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework.request import Request
 
 # App
 from . import serializers
@@ -31,44 +32,13 @@ from datetime import datetime, timedelta
 
 @permission_classes([IsAuthenticated, IsAdminUser])
 @api_view(["GET"])
-def routes(request):
-    routes = [
-        "products/",
-        "products/<int:id>",
-        "brands/",
-        "categories/",
-        "best-sellers/",
-        "best-sellers/<str:category>",
-        "search/<str:search>",
-        "customer/",
-        "customer/update/",
-        "customer/create/",
-        "customer/delete/",
-        "cart/",
-        "cart/create/<int:id>",
-        "cart/delete/<int:id>",
-        "cart/move/<int:id>",
-        "favorites/",
-        "favorites/create/<int:id>",
-        "favorites/move/<int:id>",
-        "favorites/delete/<intlist:ids>",
-        "purchase/",
-        "purchase/history/",
-        "purchase/history/<int:id>",
-        "purchase/update/<int:id>",
-        "purchase/delete/<int:id>",
-        "reviews/<int:id>",
-        "reviews/create/<int:id>",
-        "reviews/update/<int:id>",
-        "reviews/delete/<int:id>",
-    ]
-
-    return Response(routes, status=status.HTTP_200_OK)
+def routes(request: Request):
+    return Response({"message": "Made by @GoTierGod."}, status=status.HTTP_200_OK)
 
 
 class ProductViewSet(viewsets.ViewSet):
     @method_decorator(cache_page(60 * 60))
-    def list(self, request):
+    def list(self, request: Request):
         try:
             page = request.query_params.get("page")
             page = int(page) if str(page).isnumeric() else 1
@@ -89,7 +59,7 @@ class ProductViewSet(viewsets.ViewSet):
             )
 
     @method_decorator(cache_page(60 * 60))
-    def retrieve(self, request, product_id):
+    def retrieve(self, request: Request, product_id: int):
         try:
             product = models.Product.objects.get(id=product_id)
         except ObjectDoesNotExist:
@@ -106,7 +76,7 @@ class ProductViewSet(viewsets.ViewSet):
 
 class BrandViewSet(viewsets.ViewSet):
     @method_decorator(cache_page(60 * 60 * 24))
-    def list(self, request):
+    def list(self, request: Request):
         brands = models.Brand.objects.all()
         serialized_brands = serializers.BrandSerializer(brands, many=True)
 
@@ -115,50 +85,16 @@ class BrandViewSet(viewsets.ViewSet):
 
 class CategoryViewSet(viewsets.ViewSet):
     @method_decorator(cache_page(60 * 60 * 24))
-    def list(self, request):
+    def list(self, request: Request):
         categories = models.Category.objects.all()
         serialized_categories = serializers.CategorySerializer(categories, many=True)
 
         return Response(serialized_categories.data, status=status.HTTP_200_OK)
 
 
-class BestSellersViewSet(viewsets.ViewSet):
-    @method_decorator(cache_page(60 * 60))
-    def list(self, request, category=None):
-        try:
-            products = models.Product.objects.all()
-
-            page = request.query_params.get("page")
-            page = int(page) if str(page).isnumeric() else 1
-
-            if category:
-                products = products.filter(category__title__iexact=category)
-
-            best_sellers = (
-                models.OrderItem.objects.values("product")
-                .annotate(order_count=Count("id"), total_quantity=Sum("quantity"))
-                .order_by("-order_count")[:25]
-            )
-
-            best_sellers_products = [item["product"] for item in best_sellers]
-
-            products = products.filter(id__in=best_sellers_products)
-            paginator = Paginator(products, 10)
-            page_queryset = paginator.get_page(page)
-
-            serialized_products_data = [utils.compose_product(p) for p in page_queryset]
-
-            return Response(serialized_products_data, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response(
-                {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-
 class SearchViewSet(viewsets.ViewSet):
     @method_decorator(cache_page(60 * 60 * 1))
-    def list(self, request, search):
+    def list(self, request: Request, search: str):
         try:
             page = request.query_params.get("page")
             page = int(page) if str(page).isnumeric() else 1
@@ -223,7 +159,7 @@ class CustomerViewSet(viewsets.ViewSet):
         return [permission() for permission in permission_classes]
 
     @method_decorator(cache_page(60))
-    def retrieve(self, request):
+    def retrieve(self, request: Request):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -237,7 +173,7 @@ class CustomerViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def create(self, request):
+    def create(self, request: Request):
         try:
             username = request.data["username"]
             email = request.data["email"]
@@ -309,7 +245,7 @@ class CustomerViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def update(self, request):
+    def update(self, request: Request):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -390,6 +326,16 @@ class CustomerViewSet(viewsets.ViewSet):
                 else:
                     user.username = new_username
 
+            if new_birthdate:
+                new_birthdate_date = datetime.strptime(new_birthdate, "%Y-%m-%d").date()
+                if self.calculate_age(new_birthdate_date) < 18:
+                    return Response(
+                        {"message": "You must be at least 18 years old to register."},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+                else:
+                    customer.birthdate = new_birthdate
+
             if new_phone:
                 customer.phone = new_phone
             if new_country:
@@ -402,8 +348,6 @@ class CustomerViewSet(viewsets.ViewSet):
                 customer.user.first_name = new_firstname
             if new_lastname:
                 customer.user.last_name = new_lastname
-            if new_birthdate:
-                customer.birthdate = new_birthdate
             if new_gender:
                 customer.gender = new_gender
 
@@ -420,7 +364,7 @@ class CustomerViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def delete(self, request):
+    def delete(self, request: Request):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -445,7 +389,7 @@ class CustomerViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def list(self, request):
+    def list(self, request: Request):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -472,7 +416,7 @@ class CustomerViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def calculate_age(self, birthdate):
+    def calculate_age(self, birthdate) -> int:
         today = datetime.now().date()
         age = (
             today.year
@@ -485,7 +429,7 @@ class CustomerViewSet(viewsets.ViewSet):
 class CardItemViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
-    def list(self, request):
+    def list(self, request: Request):
         user = request.user
 
         cart_items = models.CartItem.objects.filter(customer__user=user)
@@ -495,7 +439,7 @@ class CardItemViewSet(viewsets.ViewSet):
 
         return Response(serialized_products_data, status=status.HTTP_200_OK)
 
-    def create(self, request, product_id):
+    def create(self, request: Request, product_id: int):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -527,7 +471,7 @@ class CardItemViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def delete(self, request, product_id):
+    def delete(self, request: Request, product_id: int):
         try:
             user = request.user
 
@@ -550,7 +494,7 @@ class CardItemViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def update(self, request, product_id):
+    def update(self, request: Request, product_id: int):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -592,7 +536,7 @@ class CardItemViewSet(viewsets.ViewSet):
 class FavItemViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
-    def list(self, request):
+    def list(self, request: Request):
         user = request.user
         customer = models.Customer.objects.get(user=user)
 
@@ -603,7 +547,7 @@ class FavItemViewSet(viewsets.ViewSet):
 
         return Response(serialized_products_data, status=status.HTTP_200_OK)
 
-    def create(self, request, product_id):
+    def create(self, request: Request, product_id: int):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -635,7 +579,7 @@ class FavItemViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def delete(self, request, product_ids=None):
+    def delete(self, request: Request, product_ids=None):
         try:
             user = request.user
 
@@ -658,7 +602,7 @@ class FavItemViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def update(self, request, product_id):
+    def update(self, request: Request, product_id: int):
         try:
             user = request.user
 
@@ -701,7 +645,7 @@ class FavItemViewSet(viewsets.ViewSet):
 class PurchaseViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
-    def create(self, request):
+    def create(self, request: Request):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -776,7 +720,7 @@ class PurchaseViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def list(self, request):
+    def list(self, request: Request):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -800,7 +744,7 @@ class PurchaseViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def retrieve(self, request, order_item_id):
+    def retrieve(self, request: Request, order_item_id: int):
         try:
             user = request.user
 
@@ -837,7 +781,7 @@ class PurchaseViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def update(self, request, order_id):
+    def update(self, request: Request, order_id: int):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -882,7 +826,7 @@ class PurchaseViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def delete(self, request, order_id):
+    def delete(self, request: Request, order_id: int):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -923,7 +867,7 @@ class ReviewViewSet(viewsets.ViewSet):
         return [permission() for permission in permission_classes]
 
     @method_decorator(cache_page(60 * 60))
-    def list(self, request, product_id):
+    def list(self, request: Request, product_id: int):
         try:
             product = models.Product.objects.get(id=product_id)
             reviews = models.Review.objects.filter(product=product, hidden=False)
@@ -939,7 +883,7 @@ class ReviewViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def create(self, request, product_id):
+    def create(self, request: Request, product_id: int):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -973,7 +917,7 @@ class ReviewViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def update(self, request, product_id):
+    def update(self, request: Request, product_id: int):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -1008,7 +952,7 @@ class ReviewViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def delete(self, request, product_id):
+    def delete(self, request: Request, product_id: int):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -1026,7 +970,7 @@ class ReviewViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def like(self, request, review_id):
+    def like(self, request: Request, review_id: int):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -1056,7 +1000,7 @@ class ReviewViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def dislike(self, request, review_id):
+    def dislike(self, request: Request, review_id: int):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -1087,7 +1031,7 @@ class ReviewViewSet(viewsets.ViewSet):
                 {"message": "Something went wrong."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    def report(self, request, review_id):
+    def report(self, request: Request, review_id: int):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
@@ -1114,7 +1058,7 @@ class CouponViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     @method_decorator(cache_page(60))
-    def list(self, request):
+    def list(self, request: Request):
         try:
             user = request.user
             customer = models.Customer.objects.get(user=user)
