@@ -94,20 +94,31 @@ urlpatterns = [
         name="favorites-update",
     ),
     # Purchase
-    path("purchase/", views.PurchaseViewSet.as_view({"post": "create"})),
+    path(
+        "purchase/",
+        views.PurchaseViewSet.as_view({"post": "create"}),
+        name="purchase-create",
+    ),
     path(
         "purchase/<int:order_id>/update/",
         views.PurchaseViewSet.as_view({"patch": "update"}),
+        name="purchase-update",
     ),
     path(
         "purchase/<int:order_id>/delete/",
         views.PurchaseViewSet.as_view({"delete": "delete"}),
+        name="purchase-delete",
     ),
     # History
-    path("purchase/history/", views.PurchaseViewSet.as_view({"get": "list"})),
+    path(
+        "purchase/history/",
+        views.PurchaseViewSet.as_view({"get": "list"}),
+        name="history-list",
+    ),
     path(
         "purchase/history/<int:order_item_id>",
         views.PurchaseViewSet.as_view({"get": "retrieve"}),
+        name="history-retrieve",
     ),
     # Reviews
     path(

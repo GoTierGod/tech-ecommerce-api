@@ -647,7 +647,7 @@ class PurchaseViewSet(viewsets.ViewSet):
 
     def create(self, request: Request):
         try:
-            user = request.user
+            user: models.User = request.user
             customer = models.Customer.objects.get(user=user)
 
             current_active_orders = models.Order.objects.filter(
@@ -684,8 +684,8 @@ class PurchaseViewSet(viewsets.ViewSet):
 
             order_items = [
                 models.OrderItem.objects.create(
-                    quantity=product["quantity"],
-                    product=models.Product.objects.get(id=product["id"]),
+                    quantity=int(product["quantity"]),
+                    product=models.Product.objects.get(id=int(product["id"])),
                     order=order,
                 )
                 for product in products
@@ -696,9 +696,12 @@ class PurchaseViewSet(viewsets.ViewSet):
             )
 
             coupon = None
-            if str(coupon_id).isdigit():
-                coupon = models.Coupon.objects.get(id=coupon_id, customer=customer)
-                total = total - coupon.amount
+            if coupon_id:
+                if str(coupon_id).isdigit():
+                    coupon = models.Coupon.objects.get(
+                        id=int(coupon_id), customer=customer
+                    )
+                    total = total - coupon.amount
 
             if len(products) > 1:
                 cart_discount = total * len(order_items) / 100
@@ -828,13 +831,11 @@ class PurchaseViewSet(viewsets.ViewSet):
 
     def delete(self, request: Request, order_id: int):
         try:
-            user = request.user
+            user: models.User = request.user
             customer = models.Customer.objects.get(user=user)
 
-            order = models.Order.objects.get(id=order_id)
-            order_items = models.OrderItem.objects.filter(
-                order=order, customer=customer
-            )
+            order = models.Order.objects.get(id=order_id, customer=customer)
+            order_items = models.OrderItem.objects.filter(order=order)
 
             if not order_items.exists():
                 return Response(

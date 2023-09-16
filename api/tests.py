@@ -5,6 +5,8 @@ from rest_framework_simplejwt.tokens import AccessToken
 from django.urls import reverse
 from django.contrib.auth.hashers import make_password
 
+import json
+
 from . import models
 from . import utils
 from . import serializers
@@ -53,7 +55,11 @@ class ProductTest(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, [utils.compose_product(self.product)])
+        self.assertEqual(
+            response.data,
+            [utils.compose_product(self.product)],
+            msg="Incorrect format of products information",
+        )
 
     def test_retrieve_products(self):
         """
@@ -63,7 +69,11 @@ class ProductTest(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, utils.compose_product(self.product))
+        self.assertEqual(
+            response.data,
+            utils.compose_product(self.product),
+            msg="Incorrect format of product information",
+        )
 
 
 class BrandAndCategoryTest(APITestCase):
@@ -90,6 +100,7 @@ class BrandAndCategoryTest(APITestCase):
         self.assertEqual(
             response.data,
             serializers.BrandSerializer(models.Brand.objects.all(), many=True).data,
+            msg="Incorrect format of serialized brands data",
         )
 
     def test_list_categories(self):
@@ -105,6 +116,7 @@ class BrandAndCategoryTest(APITestCase):
             serializers.CategorySerializer(
                 models.Category.objects.all(), many=True
             ).data,
+            msg="Incorrect format of serialized categories data",
         )
 
 
@@ -221,6 +233,7 @@ class SearchTest(APITestCase):
                 "brands": serialized_brands.data,
                 "installments": installments,
             },
+            msg="Incorrect format of search response",
         )
 
 
@@ -243,25 +256,32 @@ class CustomerTest(APITestCase):
             user=self.user,
         )
 
-        self.access_token = AccessToken.for_user(self.user)
-        self.headers = {"HTTP_AUTHORIZATION": f"Bearer {self.access_token}"}
+        access_token = AccessToken.for_user(self.user)
+        self.headers = {"HTTP_AUTHORIZATION": f"Bearer {access_token}"}
 
     def test_create_customer(self):
         """
         Ensure anyone can create a new account
         """
+        data = {
+            "username": "newuser30yo",
+            "email": "newuser@gmail.com",
+            "password": "NUpass#3011",
+            "birthdate": "2001-04-11",
+        }
+
         url = reverse("customer-create")
         response = self.client.post(
             url,
-            data={
-                "username": "newuser30yo",
-                "email": "newuser@gmail.com",
-                "password": "NUpass#3011",
-                "birthdate": "2001-04-11",
-            },
+            data=json.dumps(data),
+            content_type="application/json",
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(
+            models.Customer.objects.filter(user__username="newuser30yo").exists(),
+            msg="The customer was not created correctly",
+        )
 
     def test_retrieve_customer(self):
         """
@@ -275,26 +295,37 @@ class CustomerTest(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, utils.compose_customer(self.customer))
+        self.assertEqual(
+            response.data,
+            utils.compose_customer(self.customer),
+            msg="Incorrect format of customer information",
+        )
 
     def test_update_customer(self):
         """
         Ensure customers can update their account information
         """
+        data = {
+            "username": "godtiergo",
+            "email": "ivan@gmail.com",
+            "firstname": "Iván",
+            "country": "Chile",
+            "password": "ADaska#$99",
+        }
+
         url = reverse("customer-update")
         response = self.client.patch(
             url,
-            data={
-                "username": "godtiergo",
-                "email": "ivan@gmail.com",
-                "firstname": "Iván",
-                "country": "Chile",
-                "password": "ADaska#$99",
-            },
+            data=json.dumps(data),
+            content_type="application/json",
             **self.headers,
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(
+            models.Customer.objects.filter(user__username="godtiergo").exists(),
+            msg="The customer was not updated correctly",
+        )
 
     def test_delete_customer(self):
         """
@@ -306,6 +337,10 @@ class CustomerTest(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(
+            models.Customer.objects.filter(user=self.customer.user).exists(),
+            msg="The customer was not deleted",
+        )
 
     def test_list_customer_interactions(self):
         """
@@ -316,7 +351,11 @@ class CustomerTest(APITestCase):
         response = self.client.get(url, **self.headers)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {"likes": [], "dislikes": [], "reports": []})
+        self.assertEqual(
+            response.data,
+            {"likes": [], "dislikes": [], "reports": []},
+            msg="Incorrect format of customer interactions",
+        )
 
 
 class CartTest(APITestCase):
@@ -406,8 +445,8 @@ class CartTest(APITestCase):
             product=self.product_1, customer=self.customer
         )
 
-        self.access_token = AccessToken.for_user(self.user)
-        self.headers = {"HTTP_AUTHORIZATION": f"Bearer {self.access_token}"}
+        access_token = AccessToken.for_user(self.user)
+        self.headers = {"HTTP_AUTHORIZATION": f"Bearer {access_token}"}
 
     def test_list_cart_items(self):
         """
@@ -557,8 +596,8 @@ class FavoritesTest(APITestCase):
             product=self.product_1, customer=self.customer
         )
 
-        self.access_token = AccessToken.for_user(self.user)
-        self.headers = {"HTTP_AUTHORIZATION": f"Bearer {self.access_token}"}
+        access_token = AccessToken.for_user(self.user)
+        self.headers = {"HTTP_AUTHORIZATION": f"Bearer {access_token}"}
 
     def test_list_favorites(self):
         """
@@ -618,4 +657,185 @@ class FavoritesTest(APITestCase):
         self.assertFalse(
             models.FavItem.objects.filter(product__id=1).exists(),
             msg="The favorite was not removed",
+        )
+
+
+class PurchaseTest(APITestCase):
+    def setUp(self):
+        self.user = models.User.objects.create(
+            username="gotiergod",
+            email="gotiergod@gmail.com",
+            password=make_password("ADaska#$99"),
+        )
+
+        self.customer = models.Customer.objects.create(
+            birthdate="2000-02-02",
+            gender="M",
+            phone="Phone",
+            country="Country",
+            city="City",
+            address="Address",
+            points=6,
+            user=self.user,
+        )
+
+        self.brand_1 = models.Brand.objects.create(
+            name="HP",
+            description="Description",
+            website_url="URL",
+            logo_url="Logo",
+        )
+
+        self.brand_2 = models.Brand.objects.create(
+            name="Samsung",
+            description="Description",
+            website_url="URL",
+            logo_url="Logo",
+        )
+
+        self.category_1 = models.Category.objects.create(
+            title="Laptops", description="Description", icon="Icon"
+        )
+
+        self.category_2 = models.Category.objects.create(
+            title="Smartphones", description="Description", icon="Icon"
+        )
+
+        self.product_1 = models.Product.objects.create(
+            id=1,
+            name="HP Victus 15",
+            description="Description",
+            price="849.00",
+            offer_price="749.00",
+            installments=12,
+            stock=50,
+            months_warranty=24,
+            is_gamer=True,
+            brand=self.brand_1,
+            category=self.category_1,
+        )
+
+        self.product_2 = models.Product.objects.create(
+            id=2,
+            name="HP Victus 16",
+            description="Description",
+            price="1099.00",
+            offer_price="949.00",
+            installments=12,
+            stock=50,
+            months_warranty=24,
+            is_gamer=True,
+            brand=self.brand_1,
+            category=self.category_1,
+        )
+
+        self.product_image_1 = models.ProductImage.objects.create(
+            url="URL",
+            description="HP Victus 15",
+            product=self.product_1,
+            is_default=True,
+        )
+
+        self.product_image_2 = models.ProductImage.objects.create(
+            url="URL",
+            description="HP Victus 16",
+            product=self.product_2,
+            is_default=True,
+        )
+
+        self.coupon = models.Coupon.objects.create(
+            title="Global Offer", amount="100.00", customer=self.customer
+        )
+
+        self.order = models.Order.objects.create(
+            paid=self.product_1.offer_price,
+            payment_method="Mastercard",
+            delivery_term="2023-09-12",
+            country=self.customer.country,
+            city=self.customer.city,
+            address=self.customer.address,
+            notes="Nothing",
+            customer=self.customer,
+        )
+
+        self.order_item = models.OrderItem.objects.create(
+            quantity=1, product=self.product_1, order=self.order
+        )
+
+        access_token = AccessToken.for_user(self.user)
+        self.headers = {"HTTP_AUTHORIZATION": f"Bearer {access_token}"}
+
+    def test_create_purchase(self):
+        """
+        Ensure customers can purchase products
+        """
+        data = {
+            "products": [
+                {"id": self.product_1.pk, "quantity": 2},
+                {"id": self.product_2.pk, "quantity": 1},
+            ],
+            "payment_method": "Visa",
+            "country": "Country",
+            "city": "City",
+            "address": "Address",
+            "notes": "Nothing",
+            "coupon": self.coupon.pk,
+        }
+
+        url = reverse("purchase-create")
+        response = self.client.post(
+            url,
+            data=json.dumps(data),
+            content_type="application/json",
+            **self.headers,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            models.Order.objects.all().count(),
+            2,
+            msg="Incorrect quantity of orders created",
+        )
+        self.assertEqual(
+            models.OrderItem.objects.all().count(),
+            3,
+            msg="Incorrect quantity of order items created",
+        )
+
+    def test_update_purchase(self):
+        """
+        Ensure customers can update their order information
+        """
+        data = {
+            "country": "Japan",
+            "city": "Tokio",
+            "address": "178935",
+            "notes": "White house",
+        }
+
+        url = reverse("purchase-update", kwargs={"order_id": self.order.pk})
+        response = self.client.patch(
+            url,
+            data=json.dumps(data),
+            content_type="application/json",
+            **self.headers,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(
+            models.Order.objects.filter(country="Japan", notes="White house").exists(),
+            msg="The order information was not updated correctly",
+        )
+
+    def test_delete_purchase(self):
+        """
+        Ensure customer can cancel/delete their active orders
+        """
+        url = reverse("purchase-delete", kwargs={"order_id": self.order.pk})
+        response = self.client.delete(url, **self.headers)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(
+            models.Order.objects.filter(pk=self.order.pk).exists(),
+            msg="The order was not deleted",
         )
