@@ -926,7 +926,7 @@ class ReviewViewSet(viewsets.ViewSet):
 
             review = models.Review.objects.get(customer=customer, product=product)
 
-            rating = request.data.ger("rating")
+            rating = request.data.get("rating")
             content = request.data.get("content")
 
             try:

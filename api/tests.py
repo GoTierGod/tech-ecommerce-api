@@ -12,7 +12,6 @@ from . import utils
 from . import serializers
 
 
-# Create your tests here.
 class ProductTest(APITestCase):
     def setUp(self):
         self.brand = models.Brand.objects.create(
@@ -866,4 +865,273 @@ class PurchaseTest(APITestCase):
             response.data,
             utils.compose_purchase(self.order_item),
             msg="Incorrect format of purchase information",
+        )
+
+
+class ReviewTest(APITestCase):
+    def setUp(self):
+        self.user = models.User.objects.create(
+            username="gotiergod",
+            email="gotiergod@gmail.com",
+            password=make_password("ADaska#$99"),
+        )
+
+        self.customer = models.Customer.objects.create(
+            birthdate="2000-02-02",
+            gender="M",
+            phone="Phone",
+            country="Country",
+            city="City",
+            address="Address",
+            points=6,
+            user=self.user,
+        )
+
+        self.brand_1 = models.Brand.objects.create(
+            name="HP",
+            description="Description",
+            website_url="URL",
+            logo_url="Logo",
+        )
+
+        self.brand_2 = models.Brand.objects.create(
+            name="Samsung",
+            description="Description",
+            website_url="URL",
+            logo_url="Logo",
+        )
+
+        self.category_1 = models.Category.objects.create(
+            title="Laptops", description="Description", icon="Icon"
+        )
+
+        self.category_2 = models.Category.objects.create(
+            title="Smartphones", description="Description", icon="Icon"
+        )
+
+        self.product_1 = models.Product.objects.create(
+            id=1,
+            name="HP Victus 15",
+            description="Description",
+            price="849.00",
+            offer_price="749.00",
+            installments=12,
+            stock=50,
+            months_warranty=24,
+            is_gamer=True,
+            brand=self.brand_1,
+            category=self.category_1,
+        )
+
+        self.product_2 = models.Product.objects.create(
+            id=2,
+            name="HP Victus 16",
+            description="Description",
+            price="1099.00",
+            offer_price="949.00",
+            installments=12,
+            stock=50,
+            months_warranty=24,
+            is_gamer=True,
+            brand=self.brand_1,
+            category=self.category_1,
+        )
+
+        self.product_image_1 = models.ProductImage.objects.create(
+            url="URL",
+            description="HP Victus 15",
+            product=self.product_1,
+            is_default=True,
+        )
+
+        self.product_image_2 = models.ProductImage.objects.create(
+            url="URL",
+            description="HP Victus 16",
+            product=self.product_2,
+            is_default=True,
+        )
+
+        self.coupon = models.Coupon.objects.create(
+            title="Global Offer", amount="100.00", customer=self.customer
+        )
+
+        self.order = models.Order.objects.create(
+            paid=self.product_1.offer_price,
+            payment_method="Mastercard",
+            delivery_term="2023-09-12",
+            country=self.customer.country,
+            city=self.customer.city,
+            address=self.customer.address,
+            notes="Nothing",
+            customer=self.customer,
+        )
+
+        self.order_item = models.OrderItem.objects.create(
+            quantity=1, product=self.product_1, order=self.order
+        )
+
+        self.review = models.Review.objects.create(
+            rating=4.5,
+            content="Very good, i love it",
+            customer=self.customer,
+            product=self.product_1,
+            hidden=False,
+        )
+
+        access_token = AccessToken.for_user(self.user)
+        self.headers = {"HTTP_AUTHORIZATION": f"Bearer {access_token}"}
+
+    def test_list_reviews(self):
+        """
+        Ensure anyone can list products reviews
+        """
+        url = reverse("reviews-list", kwargs={"product_id": self.product_1.pk})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            [utils.compose_review(self.review)],
+            msg="Incorrect format of review information",
+        )
+
+    def test_create_reviews(self):
+        """
+        Ensure customers can review their purchased products
+        """
+        data = {"rating": 5.0, "content": "I love it, good choice!"}
+
+        url = reverse("reviews-create", kwargs={"product_id": self.product_2.pk})
+        response = self.client.post(
+            url,
+            data=json.dumps(data),
+            content_type="application/json",
+            **self.headers,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(
+            models.Review.objects.filter(
+                customer=self.customer, product=self.product_2
+            ).exists(),
+            msg="The review was not created",
+        )
+
+    def test_update_reviews(self):
+        """
+        Ensure customers can update their reviews
+        """
+        data = {"rating": 5.0}
+
+        url = reverse("reviews-update", kwargs={"product_id": self.product_1.pk})
+        response = self.client.patch(
+            url,
+            data=json.dumps(data),
+            content_type="application/json",
+            **self.headers,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            models.Review.objects.get(pk=self.review.pk).rating,
+            5.0,
+            msg="The review was not updated correctly",
+        )
+
+    def test_delete_reviews(self):
+        """
+        Ensure customers can delete their reviews
+        """
+        url = reverse("reviews-delete", kwargs={"product_id": self.product_1.pk})
+        response = self.client.delete(url, **self.headers)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(
+            models.Review.objects.filter(pk=self.review.pk).exists(),
+            msg="The review was not deleted",
+        )
+
+    def test_like_reviews(self):
+        """
+        Ensure customers can like reviews
+        """
+        url = reverse("reviews-like", kwargs={"review_id": self.review.pk})
+        response = self.client.patch(url, **self.headers)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            models.ReviewLike.objects.filter(review=self.review).count(),
+            1,
+            msg="The like was not added",
+        )
+
+    def test_dislike_reviews(self):
+        """
+        Ensure customers can dislike reviews
+        """
+        url = reverse("reviews-dislike", kwargs={"review_id": self.review.pk})
+        response = self.client.patch(url, **self.headers)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            models.ReviewDislike.objects.filter(review=self.review).count(),
+            1,
+            msg="The dislike was not added",
+        )
+
+    def test_report_reviews(self):
+        """
+        Ensure customers can report reviews
+        """
+        url = reverse("reviews-report", kwargs={"review_id": self.review.pk})
+        response = self.client.patch(url, **self.headers)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            models.ReviewReport.objects.filter(review=self.review).count(),
+            1,
+            msg="The report was not added",
+        )
+
+
+class CouponTest(APITestCase):
+    def setUp(self):
+        self.user = models.User.objects.create(
+            username="gotiergod",
+            email="gotiergod@gmail.com",
+            password=make_password("ADaska#$99"),
+        )
+
+        self.customer = models.Customer.objects.create(
+            birthdate="2000-02-02",
+            gender="M",
+            phone="Phone",
+            country="Country",
+            city="City",
+            address="Address",
+            points=6,
+            user=self.user,
+        )
+
+        self.coupon = models.Coupon.objects.create(
+            title="Global Offer", amount="100.00", customer=self.customer
+        )
+
+        access_token = AccessToken.for_user(self.user)
+        self.headers = {"HTTP_AUTHORIZATION": f"Bearer {access_token}"}
+
+    def test_list_coupons(self):
+        """
+        Ensure customers can list their available coupons
+        """
+        url = reverse("coupons-list")
+        response = self.client.get(url, **self.headers)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            serializers.CouponSerializer(
+                models.Coupon.objects.filter(customer=self.customer), many=True
+            ).data,
+            msg="Incorrect format of coupons information",
         )

@@ -122,31 +122,40 @@ urlpatterns = [
     ),
     # Reviews
     path(
-        "reviews/<int:review_id>/like/", views.ReviewViewSet.as_view({"patch": "like"})
+        "reviews/<int:review_id>/like/",
+        views.ReviewViewSet.as_view({"patch": "like"}),
+        name="reviews-like",
     ),
     path(
         "reviews/<int:review_id>/dislike/",
         views.ReviewViewSet.as_view({"patch": "dislike"}),
+        name="reviews-dislike",
     ),
     path(
         "reviews/<int:review_id>/report/",
         views.ReviewViewSet.as_view({"patch": "report"}),
+        name="reviews-report",
     ),
     path(
-        "reviews/product/<int:product_id>", views.ReviewViewSet.as_view({"get": "list"})
+        "reviews/product/<int:product_id>",
+        views.ReviewViewSet.as_view({"get": "list"}),
+        name="reviews-list",
     ),
     path(
         "reviews/product/<int:product_id>/create/",
         views.ReviewViewSet.as_view({"post": "create"}),
+        name="reviews-create",
     ),
     path(
         "reviews/product/<int:product_id>/update/",
         views.ReviewViewSet.as_view({"patch": "update"}),
+        name="reviews-update",
     ),
     path(
         "reviews/product/<int:product_id>/delete/",
         views.ReviewViewSet.as_view({"delete": "delete"}),
+        name="reviews-delete",
     ),
     # Coupons
-    path("coupons/", views.CouponViewSet.as_view({"get": "list"})),
+    path("coupons/", views.CouponViewSet.as_view({"get": "list"}), name="coupons-list"),
 ]
