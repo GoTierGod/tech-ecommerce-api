@@ -16,7 +16,7 @@ def compose_customer(customer: models.Customer):
         "email": customer.user.email,
         "first_name": customer.user.first_name,
         "last_name": customer.user.last_name,
-        "birthdate": customer.birthdate,
+        "birthdate": str(customer.birthdate),
         "gender": customer.gender,
         "phone": customer.phone,
         "country": customer.country,

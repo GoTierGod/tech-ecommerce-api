@@ -7,25 +7,54 @@ register_converter(IntListConverter, "intlist")
 urlpatterns = [
     path("", views.routes),
     # Products
-    path("products/", views.ProductViewSet.as_view({"get": "list"})),
     path(
-        "products/<int:product_id>", views.ProductViewSet.as_view({"get": "retrieve"})
+        "products/", views.ProductViewSet.as_view({"get": "list"}), name="product-list"
+    ),
+    path(
+        "products/<int:product_id>",
+        views.ProductViewSet.as_view({"get": "retrieve"}),
+        name="product-retrieve",
     ),
     # Brands
-    path("brands/", views.BrandViewSet.as_view({"get": "list"})),
+    path("brands/", views.BrandViewSet.as_view({"get": "list"}), name="brand-list"),
     # Categories
-    path("categories/", views.CategoryViewSet.as_view({"get": "list"})),
+    path(
+        "categories/",
+        views.CategoryViewSet.as_view({"get": "list"}),
+        name="category-list",
+    ),
     # Search
-    path("search/<str:search>", views.SearchViewSet.as_view({"get": "list"})),
+    path(
+        "search/<str:search>",
+        views.SearchViewSet.as_view({"get": "list"}),
+        name="search-list",
+    ),
     # Customer
     path(
         "customer/",
         views.CustomerViewSet.as_view({"get": "retrieve"}),
+        name="customer-retrieve",
     ),
-    path("customer/create/", views.CustomerViewSet.as_view({"post": "create"})),
-    path("customer/update/", views.CustomerViewSet.as_view({"patch": "update"})),
-    path("customer/delete/", views.CustomerViewSet.as_view({"delete": "delete"})),
-    path("customer/interactions/", views.CustomerViewSet.as_view({"get": "list"})),
+    path(
+        "customer/create/",
+        views.CustomerViewSet.as_view({"post": "create"}),
+        name="customer-create",
+    ),
+    path(
+        "customer/update/",
+        views.CustomerViewSet.as_view({"patch": "update"}),
+        name="customer-update",
+    ),
+    path(
+        "customer/delete/",
+        views.CustomerViewSet.as_view({"delete": "delete"}),
+        name="customer-delete",
+    ),
+    path(
+        "customer/interactions/",
+        views.CustomerViewSet.as_view({"get": "list"}),
+        name="customer-list",
+    ),
     # Cart
     path("cart/", views.CardItemViewSet.as_view({"get": "list"})),
     path(

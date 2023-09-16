@@ -247,7 +247,7 @@ class CustomerViewSet(viewsets.ViewSet):
 
     def update(self, request: Request):
         try:
-            user = request.user
+            user: models.User = request.user
             customer = models.Customer.objects.get(user=user)
 
             new_username = request.data.get("username")
@@ -264,7 +264,7 @@ class CustomerViewSet(viewsets.ViewSet):
             new_gender = request.data.get("gender")
 
             if new_email:
-                if customer.user.check_password(password):
+                if user.check_password(password):
                     if models.User.objects.filter(email=new_email).exists():
                         return Response(
                             {"message": f'Email "{new_email}" is already in use.'},
@@ -285,7 +285,7 @@ class CustomerViewSet(viewsets.ViewSet):
                     )
 
             if new_password:
-                if customer.user.check_password(password):
+                if user.check_password(password):
                     try:
                         validate_password(new_password)
                     except ValidationError as e:
@@ -366,12 +366,12 @@ class CustomerViewSet(viewsets.ViewSet):
 
     def delete(self, request: Request):
         try:
-            user = request.user
+            user: models.User = request.user
             customer = models.Customer.objects.get(user=user)
 
             password = request.data["password"]
 
-            if not customer.user.check_password(password):
+            if not user.check_password(password):
                 return Response(
                     {"message": "Incorrect password."},
                     status=status.HTTP_401_UNAUTHORIZED,
