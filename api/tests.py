@@ -839,3 +839,31 @@ class PurchaseTest(APITestCase):
             models.Order.objects.filter(pk=self.order.pk).exists(),
             msg="The order was not deleted",
         )
+
+    def test_list_history(self):
+        """
+        Ensure customers can list their purchase history
+        """
+        url = reverse("history-list")
+        response = self.client.get(url, **self.headers)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            [utils.compose_purchase(self.order_item)],
+            msg="Incorrect format of purchases information",
+        )
+
+    def test_retrieve_history(self):
+        """
+        Ensure customers can retrieve a specific purchase information
+        """
+        url = reverse("history-retrieve", kwargs={"order_item_id": self.order_item.pk})
+        response = self.client.get(url, **self.headers)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            utils.compose_purchase(self.order_item),
+            msg="Incorrect format of purchase information",
+        )
