@@ -426,7 +426,7 @@ class CustomerViewSet(viewsets.ViewSet):
         return age
 
 
-class CardItemViewSet(viewsets.ViewSet):
+class CartItemViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request: Request):

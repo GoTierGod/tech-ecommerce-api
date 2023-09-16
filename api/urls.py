@@ -56,31 +56,42 @@ urlpatterns = [
         name="customer-list",
     ),
     # Cart
-    path("cart/", views.CardItemViewSet.as_view({"get": "list"})),
+    path("cart/", views.CartItemViewSet.as_view({"get": "list"}), name="cart-list"),
     path(
         "cart/create/<int:product_id>",
-        views.CardItemViewSet.as_view({"post": "create"}),
+        views.CartItemViewSet.as_view({"post": "create"}),
+        name="cart-create",
     ),
     path(
         "cart/delete/<int:product_id>",
-        views.CardItemViewSet.as_view({"delete": "delete"}),
+        views.CartItemViewSet.as_view({"delete": "delete"}),
+        name="cart-delete",
     ),
     path(
-        "cart/move/<int:product_id>", views.CardItemViewSet.as_view({"patch": "update"})
+        "cart/move/<int:product_id>",
+        views.CartItemViewSet.as_view({"patch": "update"}),
+        name="cart-update",
     ),
     # Favorites
-    path("favorites/", views.FavItemViewSet.as_view({"get": "list"})),
+    path(
+        "favorites/",
+        views.FavItemViewSet.as_view({"get": "list"}),
+        name="favorites-list",
+    ),
     path(
         "favorites/create/<int:product_id>",
         views.FavItemViewSet.as_view({"post": "create"}),
+        name="favorites-create",
     ),
     path(
         "favorites/delete/<intlist:product_ids>",
         views.FavItemViewSet.as_view({"delete": "delete"}),
+        name="favorites-delete",
     ),
     path(
         "favorites/move/<int:product_id>",
         views.FavItemViewSet.as_view({"patch": "update"}),
+        name="favorites-update",
     ),
     # Purchase
     path("purchase/", views.PurchaseViewSet.as_view({"post": "create"})),

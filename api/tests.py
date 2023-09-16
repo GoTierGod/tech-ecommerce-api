@@ -317,3 +317,305 @@ class CustomerTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, {"likes": [], "dislikes": [], "reports": []})
+
+
+class CartTest(APITestCase):
+    def setUp(self):
+        self.user = models.User.objects.create(
+            username="gotiergod",
+            email="gotiergod@gmail.com",
+            password=make_password("ADaska#$99"),
+        )
+
+        self.customer = models.Customer.objects.create(
+            birthdate="2000-02-02",
+            gender="M",
+            phone="Phone",
+            country="Country",
+            city="City",
+            address="Address",
+            points=6,
+            user=self.user,
+        )
+
+        self.brand_1 = models.Brand.objects.create(
+            name="HP",
+            description="Description",
+            website_url="URL",
+            logo_url="Logo",
+        )
+
+        self.brand_2 = models.Brand.objects.create(
+            name="Samsung",
+            description="Description",
+            website_url="URL",
+            logo_url="Logo",
+        )
+
+        self.category_1 = models.Category.objects.create(
+            title="Laptops", description="Description", icon="Icon"
+        )
+
+        self.category_2 = models.Category.objects.create(
+            title="Smartphones", description="Description", icon="Icon"
+        )
+
+        self.product_1 = models.Product.objects.create(
+            id=1,
+            name="HP Victus 15",
+            description="Description",
+            price="849.00",
+            offer_price="749.00",
+            installments=12,
+            stock=50,
+            months_warranty=24,
+            is_gamer=True,
+            brand=self.brand_1,
+            category=self.category_1,
+        )
+
+        self.product_2 = models.Product.objects.create(
+            id=2,
+            name="HP Victus 16",
+            description="Description",
+            price="1099.00",
+            offer_price="949.00",
+            installments=12,
+            stock=50,
+            months_warranty=24,
+            is_gamer=True,
+            brand=self.brand_1,
+            category=self.category_1,
+        )
+
+        self.product_image_1 = models.ProductImage.objects.create(
+            url="URL",
+            description="HP Victus 15",
+            product=self.product_1,
+            is_default=True,
+        )
+
+        self.product_image_2 = models.ProductImage.objects.create(
+            url="URL",
+            description="HP Victus 16",
+            product=self.product_2,
+            is_default=True,
+        )
+
+        self.cart_item_1 = models.CartItem.objects.create(
+            product=self.product_1, customer=self.customer
+        )
+
+        self.access_token = AccessToken.for_user(self.user)
+        self.headers = {"HTTP_AUTHORIZATION": f"Bearer {self.access_token}"}
+
+    def test_list_cart_items(self):
+        """
+        Ensure customers can list their cart items
+        """
+        url = reverse("cart-list")
+        response = self.client.get(url, **self.headers)
+
+        cart_items = models.CartItem.objects.filter(customer=self.customer)
+        serialized_products_data = [
+            utils.compose_product(item.product) for item in cart_items
+        ]
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data, serialized_products_data, msg="Incorrect list of cart items"
+        )
+
+    def test_create_cart_items(self):
+        """
+        Ensure customers can add new cart items
+        """
+        url = reverse("cart-create", kwargs={"product_id": 2})
+        response = self.client.post(url, **self.headers)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(
+            models.CartItem.objects.filter(product__id=2).exists(),
+            msg="The cart item was not added",
+        )
+
+    def test_move_cart_items_to_favs(self):
+        """
+        Ensure customers can move their cart items to favorites
+        """
+        url = reverse("cart-update", kwargs={"product_id": 1})
+        response = self.client.patch(url, **self.headers)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(
+            models.CartItem.objects.filter(product__id=1).exists(),
+            msg="The cart iten was not removed",
+        )
+        self.assertTrue(
+            models.FavItem.objects.filter(product__id=1).exists(),
+            msg="The cart item was not moved",
+        )
+
+    def test_delete_cart_items(self):
+        """
+        Ensure customers can remove their cart items
+        """
+        url = reverse("cart-delete", kwargs={"product_id": 1})
+        response = self.client.delete(url, **self.headers)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(
+            models.CartItem.objects.filter(product__id=1).exists(),
+            msg="The cart item was not removed",
+        )
+
+
+class FavoritesTest(APITestCase):
+    def setUp(self):
+        self.user = models.User.objects.create(
+            username="gotiergod",
+            email="gotiergod@gmail.com",
+            password=make_password("ADaska#$99"),
+        )
+
+        self.customer = models.Customer.objects.create(
+            birthdate="2000-02-02",
+            gender="M",
+            phone="Phone",
+            country="Country",
+            city="City",
+            address="Address",
+            points=6,
+            user=self.user,
+        )
+
+        self.brand_1 = models.Brand.objects.create(
+            name="HP",
+            description="Description",
+            website_url="URL",
+            logo_url="Logo",
+        )
+
+        self.brand_2 = models.Brand.objects.create(
+            name="Samsung",
+            description="Description",
+            website_url="URL",
+            logo_url="Logo",
+        )
+
+        self.category_1 = models.Category.objects.create(
+            title="Laptops", description="Description", icon="Icon"
+        )
+
+        self.category_2 = models.Category.objects.create(
+            title="Smartphones", description="Description", icon="Icon"
+        )
+
+        self.product_1 = models.Product.objects.create(
+            id=1,
+            name="HP Victus 15",
+            description="Description",
+            price="849.00",
+            offer_price="749.00",
+            installments=12,
+            stock=50,
+            months_warranty=24,
+            is_gamer=True,
+            brand=self.brand_1,
+            category=self.category_1,
+        )
+
+        self.product_2 = models.Product.objects.create(
+            id=2,
+            name="HP Victus 16",
+            description="Description",
+            price="1099.00",
+            offer_price="949.00",
+            installments=12,
+            stock=50,
+            months_warranty=24,
+            is_gamer=True,
+            brand=self.brand_1,
+            category=self.category_1,
+        )
+
+        self.product_image_1 = models.ProductImage.objects.create(
+            url="URL",
+            description="HP Victus 15",
+            product=self.product_1,
+            is_default=True,
+        )
+
+        self.product_image_2 = models.ProductImage.objects.create(
+            url="URL",
+            description="HP Victus 16",
+            product=self.product_2,
+            is_default=True,
+        )
+
+        self.cart_item_1 = models.FavItem.objects.create(
+            product=self.product_1, customer=self.customer
+        )
+
+        self.access_token = AccessToken.for_user(self.user)
+        self.headers = {"HTTP_AUTHORIZATION": f"Bearer {self.access_token}"}
+
+    def test_list_favorites(self):
+        """
+        Ensure customers can list their favorites
+        """
+        url = reverse("favorites-list")
+        response = self.client.get(url, **self.headers)
+
+        fav_items = models.FavItem.objects.filter(customer=self.customer)
+        serialized_products_data = [
+            utils.compose_product(item.product) for item in fav_items
+        ]
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data, serialized_products_data, msg="Incorrect list of favorites"
+        )
+
+    def test_create_favorites(self):
+        """
+        Ensure customers can add new favorites
+        """
+        url = reverse("favorites-create", kwargs={"product_id": 2})
+        response = self.client.post(url, **self.headers)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(
+            models.FavItem.objects.filter(product__id=2).exists(),
+            msg="The favorite was not added",
+        )
+
+    def test_move_favs_to_cart(self):
+        """
+        Ensure customers can move their favorites to cart
+        """
+        url = reverse("favorites-update", kwargs={"product_id": 1})
+        response = self.client.patch(url, **self.headers)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(
+            models.FavItem.objects.filter(product__id=1).exists(),
+            msg="The favorite was not removed",
+        )
+        self.assertTrue(
+            models.CartItem.objects.filter(product__id=1).exists(),
+            msg="The favorite was not moved",
+        )
+
+    def test_delete_favorites(self):
+        """
+        Ensure customers can remove their favorites
+        """
+        url = reverse("favorites-delete", kwargs={"product_ids": [1]})
+        response = self.client.delete(url, **self.headers)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(
+            models.FavItem.objects.filter(product__id=1).exists(),
+            msg="The favorite was not removed",
+        )
