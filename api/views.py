@@ -27,7 +27,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
 # Other
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 
 @permission_classes([IsAuthenticated, IsAdminUser])
@@ -179,6 +179,18 @@ class CustomerViewSet(viewsets.ViewSet):
             email = request.data["email"]
             password = request.data["password"]
             birthdate = request.data["birthdate"]
+
+            # Given my database limitations, i need to control the database size :3
+            customers_created_today = models.User.objects.filter(
+                date_joined=date.today()
+            ).count()
+            if customers_created_today >= 50:
+                return Response(
+                    {
+                        "message": "The app has reached its daily account creation limit."
+                    },
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
 
             if len(username) < 8:
                 return Response(
@@ -667,6 +679,16 @@ class PurchaseViewSet(viewsets.ViewSet):
             notes = request.data["notes"]
             coupon_id = request.data.get("coupon")
 
+            # Given my database limitations, i need to control the database size :3
+            orders_created_today = models.Order.objects.filter(
+                purchase_date=date.today()
+            ).count()
+            if orders_created_today >= 100:
+                return Response(
+                    {"message": "The app has reached its daily order creation limit."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
             current_date = datetime.now().date()
             delivery_term = current_date + timedelta(days=3)
             delivery_term_str = delivery_term.strftime("%Y-%m-%d")
@@ -892,6 +914,17 @@ class ReviewViewSet(viewsets.ViewSet):
 
             rating = request.data["rating"]
             content = request.data["content"]
+
+            # Given my database limitations, i need to control the database size :3
+            reviews_created_today = models.Review.objects.filter(
+                date=date.today()
+            ).count()
+            if reviews_created_today >= 100:
+                return Response(
+                    {"message": "The app has reached its daily review creation limit."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+
             try:
                 validators.profanity_filter(content)
             except ValidationError as e:

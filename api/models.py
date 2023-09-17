@@ -52,6 +52,7 @@ class Customer(models.Model):
         return self.user.username
 
 
+# This feature is not in use but could be implemented in the future
 class DeliveryMan(models.Model):
     birthdate = models.DateField()
     GENDERS = (("M", "Male"), ("F", "Female"))
@@ -97,6 +98,7 @@ class Product(models.Model):
         return self.name
 
 
+# This feature is not in use but could be implemented in the future
 class ProductSpecification(models.Model):
     key = models.CharField(max_length=45)
     value = models.CharField(max_length=45)
