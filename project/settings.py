@@ -15,7 +15,6 @@ import os
 from dotenv import load_dotenv
 from distutils.util import strtobool
 from datetime import timedelta
-import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,7 +31,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 DEBUG = strtobool(os.environ.get("DEBUG_MODE") or "False")
 
 ALLOWED_HOSTS = (
-    [".vercel.app", "127.0.0.1"]
+    ["127.0.0.1"]
     if strtobool(os.environ.get("DEBUG_MODE") or "False")
     else [".vercel.app"]
 )
@@ -156,12 +155,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-        # "rest_framework.authentication.TokenAuthentication",
-        # "rest_framework.authentication.SessionAuthentication",
     ],
-    # "DEFAULT_PERMISSION_CLASSES": [
-    #     "rest_framework.permissions.IsAuthenticated",
-    # ]
     "DEFAULT_THROTTLE_CLASSES": [
         "api.throttles.AnonSustainedRateThrottle",
         "api.throttles.UserSustainedRateThrottle",
