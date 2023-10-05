@@ -2,6 +2,11 @@
 
 Built with the Django REST Framework, it integrates seamlessly with the Next.js front-end application and offers a complete set of essential features. These encompass endpoints for managing application resources, authentication and authorization mechanisms, integration with a PostgreSQL database powered by Supabase, throttling, caching and other functionalities to ensure a secure and seamless e-commerce experience.
 
+## Repositories
+
+- [Front-End Repository](https://github.com/GoTierGod/tech-ecommerce)
+- [Back-End Repository (Current)](https://github.com/GoTierGod/tech-ecommerce-api)
+
 ## Key Features
 
 - **Authentication:** Utilize JWT (JSON Web Tokens) for secure user authentication.
